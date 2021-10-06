@@ -7,79 +7,51 @@ final case class RefType(name : String, params : List[Type]) extends Type
 
 class FiniteClosure(val extendsRelations : Set[(RefType, RefType)]){
 
-  def superTypes(of : String) : Set[RefType] = Set(extendsRelations.map(p => (p._1.name, p._2)).toMap.get(of).get)
-  // extendsRelations.filter(p => p._1.name == of).map(p => superTypes(p._1.name)).flatten + extendsRelations.filter(p => p._1.name == of).map(_._1).head
-  def subTypes(of : String) : Set[RefType] =Set(extendsRelations.map(p => (p._1.name, p._2)).toMap.get(of).get)
-    //extendsRelations.filter(p => p._2.name == of).map(p => subTypes(p._2.name)).flatten + extendsRelations.filter(p => p._1.name == of).map(_._1).head
-
-    def getFCType(name : String): RefType ={
-      extendsRelations.map(it => it._1).find(it => it.name == name).get
-    }
-  /*
-
-  def cartesianProduct[A](lists : List[Set[A]]) : Set[List[A]] ={
-
-    def listMultiply[A](inFront: Set[A], list: Set[List[A]]) = list.flatMap(s => inFront.map(element => element :: s))
-
-    if(lists.size == 1) {
-      lists.head.map(it => List(it))
-    }
-    else{
-      listMultiply(lists.head, cartesianProduct(lists.tail))
-    }
-
+  private def calculateSupertypes(of: RefType) ={
+    var rel = Set((of, of))
+    var size = rel.size
+    do {
+      size = rel.size
+      rel = rel ++ reflexiveTypes(rel) ++ transitiveTypes(rel) ++ superClassTypes(rel)
+    }while(rel.size > size)
+    rel.map(_._2)
+  }
+  private def reflexiveTypes(of: Set[(RefType, RefType)]) ={
+    val ref = Set.newBuilder[(RefType, RefType)]
+    ref ++= of.map(pair => (pair._1, pair._1))
+    ref ++= of.map(pair => (pair._2, pair._2))
+    ref.result()
+  }
+  private def transitiveTypes(of: Set[(RefType, RefType)]) ={
+    val ref = Set.newBuilder[(RefType, RefType)]
+    ref ++= of.map(pair => (pair._1, pair._1))
+    ref ++= of.map(pair => (pair._2, pair._2))
+    ref.result()
+  }
+  private def superClassTypes(of: RefType) = {
+    val extendsRelation = extendsRelations.filter(pair => pair._1.name.equals(of.name))
+    extendsRelation.map(p => {
+      val paramMap = p._1.params.zip(of.params).toMap
+      (of,RefType(p._2.name, p._2.params.map(paramMap)))
+    })
+  }
+  private def superClassTypes(of: Set[(RefType, RefType)]) : Set[(RefType, RefType)] ={
+    val sClass = Set.newBuilder[(RefType, RefType)]
+    sClass ++= of.flatMap(pair => Set(pair._2, pair._1)).flatMap(t => superClassTypes(t))
+    sClass.result()
   }
 
-    //Kann wiederverwendet werden:
-    def replaceParams(newType : RefType, replace : RefType): RefType ={
-      val fcType = getFCType(replace.name)
-      val replaceMap : Map[TypeVariable, Type] = fcType.params.map{case t: TypePlaceholder => t}.zip(replace.params).toMap
-      RefType(newType.name, newType.params.map{case t: TypePlaceholder => replaceMap(t) case r: RefType => replaceParams(r, replace) })
-    }
+  def superTypes(of : RefType) : Set[RefType] = calculateSupertypes(of)
 
-    //TODO: Falsche Funktionen
-    def greater(than : SimpleType): Set[SimpleType] = {
-      than match {
-        case RefType(name, params) => {
-          val superTypesNoWildcard = superTypes(name).map(superType => replaceParams(superType, RefType(name, params) ))
-          superTypesNoWildcard
-            .flatMap(superType => {
-              cartesianProduct(superType.params.map(param => greaterArg(param)))
-                .map(parameterList => RefType(superType.name, parameterList))
-            }
-            )
-        }
-        case TypePlaceholder(name) => Set(than)
-      }
+  def isPossibleSupertype(of: String, superType: String): Boolean = {
+    val extendsMap = extendsRelations.map(p => (p._1.name,p._2.name)).toMap
+    var subType = of
+    var isSuperType = false
+    if(subType.equals(superType)) isSuperType = true
+    while(extendsMap.contains(subType)){
+      subType = extendsMap.get(subType).get
+      if(subType.equals(superType)) isSuperType = true
     }
-
-    def smaller(than : SimpleType): Set[SimpleType] = {
-      than match {
-        case RefType(name, params) => {
-          val subTypesNoWildcard = subTypes(name).map(subType => replaceParams(subType, RefType(name, params) ))
-          subTypesNoWildcard
-            .flatMap(subTypes => {
-              cartesianProduct(subTypes.params.map(param => smallerArg(param)))
-                .map(parameterList => RefType(subTypes.name, parameterList))
-            }
-            )
-        }
-        case TypePlaceholder(name) => Set(than)
-      }
-    }
-
-    def greaterArg(t : UnifyType): Set[UnifyType] ={
-      t match { //TODO not recursive yet
-        case RefType(name, params) => Set(t, SuperWildcard(RefType(name, params)), ExtendsWildcard(RefType(name, params)))
-        case other => Set(other)
-      }
-    }
-
-    def smallerArg(t : UnifyType): Set[UnifyType] ={
-      t match { //TODO not recursive yet
-        case RefType(name, params) => Set(t, SuperWildcard(RefType(name, params)), ExtendsWildcard(RefType(name, params)))
-        case other => Set(other)
-      }
-    }
-  */
+    isSuperType
+  }
 }
