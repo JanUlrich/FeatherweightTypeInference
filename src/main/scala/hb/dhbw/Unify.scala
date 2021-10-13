@@ -3,15 +3,27 @@ package hb.dhbw
 
 object Unify {
 
-  sealed abstract class Constraint
-  final case class LessDot(left: Type, right: Type) extends Constraint
-  final case class EqualsDot(left: Type, right: Type) extends Constraint
+  sealed abstract class Constraint(val left: Type, val right: Type)
+  final case class LessDot(override val left: Type, override val right: Type) extends Constraint(left, right)
+  final case class EqualsDot(override val left: Type, override val right: Type) extends Constraint(left, right)
 
-  def unify(finiteClosure: FiniteClosure): Unit ={
-
+  def unify(orCons: Set[Set[Set[Constraint]]], fc: FiniteClosure) : Set[Set[Constraint]] = {
+    val eqSets = cartesianProduct(orCons)
+    val step2Results = eqSets.flatMap(eqSet => {
+      val rulesResult = applyRules(fc)(eqSet.flatten)
+      step2(rulesResult, fc)
+    })
+    step2Results.flatMap(eqSet => {
+      val (substResult, unifier) = substStep(eqSet)
+      if(!unifier.isDefined){
+        Set(substResult)
+      }else{
+        unify(Set(Set(substResult)), fc).map(s => s + unifier.get)
+      }
+    })
   }
 
-  def step1(eq : Set[Constraint], fc: FiniteClosure) ={
+  def step2(eq : Set[Constraint], fc: FiniteClosure) ={
     val eq1 = eq.filter(c => c match{
       case LessDot(TypeVariable(_), TypeVariable(_)) => true
       case EqualsDot(TypeVariable(_), TypeVariable(_)) => true
@@ -23,26 +35,40 @@ object Unify {
         .map(superType => Set(EqualsDot(TypeVariable(a), superType).asInstanceOf[Constraint]))
       case _ => null
     }).filter(s => s!=null)
-    //val mutatedCLessdotACons = cartesianProduct(cLessdotACons)
-    val aLessdotCCons: Set[Set[Set[Constraint]]] = eq.map(c => c match{
+
+    val alessdota = eq1.filter(c => c match{
+      case LessDot(TypeVariable(_), TypeVariable(_)) => true
+      case _ => false
+    }).asInstanceOf[Set[LessDot]]
+
+    val aLessdotCConsAndBs: Set[(LessDot,Option[TypeVariable])] = eq.map(c => c match{
       case LessDot(TypeVariable(a),RefType(name,params)) =>{
-        val bs = eq1.filter(c => c match{
-          case LessDot(TypeVariable(leftSide), TypeVariable(_)) => leftSide.equals(a)
-          case _ => false
-        }).map(p => p.asInstanceOf[LessDot].right).asInstanceOf[Set[TypeVariable]]
-        bs.map(b => {
-          val allSuperTypes = fc.superTypes(RefType(name,params))
-            .map(superType => Set(EqualsDot(b, superType).asInstanceOf[Constraint]))
-          Set(Set(LessDot(b, RefType(name,params))) ++ allSuperTypes
-        )
-        })
-        fc.superTypes(RefType(name,params))
-          .map(superType => Set(EqualsDot(TypeVariable(a), superType).asInstanceOf[Constraint]))
+        val bs = alessdota.flatMap(c => Set(c.left, c.right)).asInstanceOf[Set[TypeVariable]]
+          .filter(c => !a.equals(c) && isLinked(TypeVariable(a), c, alessdota))
+        if(bs.isEmpty){
+          Set((LessDot(TypeVariable(a),RefType(name,params)),None))
+        }else{
+          bs.map(b => (LessDot(TypeVariable(a),RefType(name,params)),Some(b)))
+        }
       }
       case _ => null
-    }).filter(s => s!=null)
-    //val mutadedALessdotCCons = cartesianProduct(aLessdotCCons)
-    val eqSet = cartesianProduct(Set(Set(eq1)) ++ aLessdotCCons ++ cLessdotACons)
+    }).filter(s => s!=null).flatten
+
+    val aLessdotCCons =  aLessdotCConsAndBs.map{
+      case (ac:LessDot,Some(b)) =>
+        Set(Set(LessDot(b, ac.right))) ++
+          fc.superTypes(ac.right.asInstanceOf[RefType])
+            .map(superType => Set(EqualsDot(b, superType)))
+    case (ac, None) => null
+    }.filter(c => c != null).asInstanceOf[Set[Set[Set[Constraint]]]]
+
+    val eq2 = eq.filter(c => c match{
+      case LessDot(TypeVariable(_), RefType(_,_)) => true
+      case EqualsDot(TypeVariable(_), RefType(_,_)) => true
+      case EqualsDot(RefType(_,_),TypeVariable(_)) => true
+      case _ => false
+    })
+    val eqSet = cartesianProduct(Set(Set(eq1)) ++ Set(Set(eq2)) ++ aLessdotCCons ++ cLessdotACons)
     eqSet.map( s => s.flatten)
   }
 
@@ -155,25 +181,55 @@ object Unify {
     val circle = findCircles(aLessdota).find(!_.isEmpty)
     if(circle.isDefined){
       val newEq = eq -- circle.get
-      newEq ++ (circle.get.map(c => EqualsDot(c.left, c.right)))
+      Some(newEq ++ (circle.get.map(c => EqualsDot(c.left, c.right))))
     }else{
-      eq
+      None
     }
   }
 
-  def applyRules(fc: FiniteClosure) ={
+  private def paramsContain(tv: TypeVariable, inParams: RefType): Boolean =
+    inParams.params.find(t => t match {
+      case TypeVariable(a) => tv.equals(TypeVariable(a))
+      case RefType(a,p) => paramsContain(tv, RefType(a,p))
+    }).isDefined
+  def substStep(eq: Set[Constraint]) =  eq.find(c => c match {
+    case EqualsDot(TypeVariable(a), RefType(n, p)) => !paramsContain(TypeVariable(a), RefType(n,p))
+    case _ => false
+  }).map(c => (subst(c.left.asInstanceOf[TypeVariable], c.right.asInstanceOf[RefType], eq), Some(c))).getOrElse((eq, None))
+
+  private def subst(a: TypeVariable, withType: RefType,in: Type) :Type = in match {
+    case RefType(n, p) => RefType(n,p.map(t => subst(a, withType, t)).asInstanceOf[List[Type]])
+    case TypeVariable(n) =>
+      if(a.equals(in)){withType}else{in}
   }
 
-  def cartesianProduct[A](lists : Set[Set[A]]) : Set[Set[A]] ={
-    def listMultiply[A](inFront: Set[A], list: Set[Set[A]]) = list.flatMap(s => inFront.map(element => s + element))
-
-    if(lists.size == 1) {
-      lists.head.map(it => Set(it))
-    }
-    else{
-      listMultiply(lists.head, cartesianProduct(lists.tail))
-    }
-
+  def subst(a: TypeVariable, refType: RefType,eq: Set[Constraint]): Set[Constraint] = {
+    eq.map(c => c match {
+      case LessDot(left, right) => LessDot(subst(a, refType, left), subst(a, refType, right))
+      case EqualsDot(left, right) => EqualsDot(subst(a, refType, left), subst(a, refType, right))
+    })
   }
+
+  private def doWhileSome(fun: Set[Constraint]=>Option[Set[Constraint]], eqTemp: Set[Constraint]): Set[Constraint] =
+    fun(eqTemp).map(eqTemp2 => doWhileSome(fun,eqTemp2)).getOrElse(eqTemp)
+
+  def applyRules(fc: FiniteClosure) = (eq: Set[Constraint]) => {
+    var eqNew: Set[Constraint] = null
+    var eqFinish: Set[Constraint] = eq
+    do{
+      eqNew = doWhileSome(Unify.equalsRule,eqFinish)
+      eqFinish = reduceRule(matchRule(adaptRule(adaptRule(eqNew, fc), fc), fc))
+    }while(!eqNew.equals(eqFinish))
+    eqNew
+  }
+
+  def cartesianProduct[T](xss: Set[Set[T]]): Set[Set[T]] =
+    if(xss.isEmpty){
+      Set(Set())
+    } else{
+      for(xh <- xss.head; xt <- cartesianProduct(xss.tail)) yield xt + xh
+    }
+
+
 }
 
