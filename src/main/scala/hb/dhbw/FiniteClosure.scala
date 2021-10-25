@@ -1,10 +1,6 @@
 package hb.dhbw
 
 
-sealed abstract class Type
-final case class TypeVariable(name : String) extends Type
-final case class RefType(name : String, params : List[Type]) extends Type
-
 class FiniteClosure(val extendsRelations : Set[(RefType, RefType)]){
 
   private def calculateSupertypes(of: RefType) ={

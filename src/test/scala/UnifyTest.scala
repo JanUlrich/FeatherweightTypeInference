@@ -1,6 +1,5 @@
 
-import hb.dhbw.{FiniteClosure, RefType, TypeVariable, Unify}
-import hb.dhbw.Unify.LessDot
+import hb.dhbw.{FiniteClosure, RefType, TypeVariable, Unify, UnifyEqualsDot, UnifyLessDot}
 import org.scalatest.FunSuite
 
 class UnifyTest extends FunSuite {
@@ -11,19 +10,19 @@ class UnifyTest extends FunSuite {
   val fc = new FiniteClosure(Set(fcPair1, fcPair2, fcPair3))
 
   test("Unify.step2.alinkedb"){
-    var step2 = Unify.step2(Set(LessDot(TypeVariable("c"), TypeVariable("b")),
-      LessDot(TypeVariable("a"), RefType("List", List(RefType("Object", List()))))), fc)
+    var step2 = Unify.step2(Set(UnifyLessDot(TypeVariable("c"), TypeVariable("b")),
+      UnifyLessDot(TypeVariable("a"), RefType("List", List(RefType("Object", List()))))), fc)
     assert(step2.head.size == 2)
   }
 
   test("Unify.step2") {
-    var step2 = Unify.step2(Set(LessDot(TypeVariable("a"), TypeVariable("b")),
-      LessDot(TypeVariable("a"), RefType("List", List(RefType("Object", List()))))), fc)
+    var step2 = Unify.step2(Set(UnifyLessDot(TypeVariable("a"), TypeVariable("b")),
+      UnifyLessDot(TypeVariable("a"), RefType("List", List(RefType("Object", List()))))), fc)
     println(step2)
     assert(!step2.isEmpty)
 
-    step2 = Unify.step2(Set(LessDot(TypeVariable("a"), TypeVariable("b")),
-      LessDot(RefType("List", List(RefType("Object", List()))), TypeVariable("a"))), fc)
+    step2 = Unify.step2(Set(UnifyLessDot(TypeVariable("a"), TypeVariable("b")),
+      UnifyLessDot(RefType("List", List(RefType("Object", List()))), TypeVariable("a"))), fc)
     println(step2)
   }
 
