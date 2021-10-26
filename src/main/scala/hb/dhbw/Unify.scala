@@ -163,7 +163,7 @@ object Unify {
       while(iterator.hasNext && circle.isEmpty){
         val newAdd = iterator.next()
         if(newAdd.right.equals(graph.head.left)){
-          circle = graph ++ List(newAdd)
+          circle = graph :+ newAdd
         }else{
           circle = findCircle(graph ++ List(newAdd))
         }
@@ -194,7 +194,7 @@ object Unify {
     }).isDefined
   def substStep(eq: Set[UnifyConstraint]) =  eq.find(c => c match {
     case UnifyEqualsDot(TypeVariable(a), RefType(n, p)) => !paramsContain(TypeVariable(a), RefType(n,p))
-    case UnifyEqualsDot(TypeVariable(a), TypeVariable(b)) => true
+    case UnifyEqualsDot(TypeVariable(a), TypeVariable(b)) => !a.equals(b)
     case _ => false
   }).map(c => (subst(c.left.asInstanceOf[TypeVariable], c.right, eq), Some(c))).getOrElse((eq, None))
 

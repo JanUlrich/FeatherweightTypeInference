@@ -27,4 +27,14 @@ class IntegrationTest extends FunSuite {
     println(result.map(Main.prettyPrint(_)))
   }
 
+  test("IdentCallExample"){
+    val result = FJTypeinference.typeinference("class Test extends Object{\n\n  m(a,b){return this.m(a);\n}\nm(a){return a;}\n}")
+    println(result.map(Main.prettyPrint(_)))
+  }
+
+  test("IdentRecursive"){
+    val result = FJTypeinference.typeinference("class Test extends Object{\n\nm(a){\nreturn this.m(a);\n}\n}")
+    println(result.map(Main.prettyPrint(_)))
+  }
+
 }

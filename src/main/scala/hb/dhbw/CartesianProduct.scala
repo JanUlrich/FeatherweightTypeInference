@@ -6,7 +6,7 @@ class CartesianProduct[A](private val setOfSets: List[List[A]]){
   private var max: Long = 1
   private var i: Long = 0
 
-  def this(setOfSets: Set[Set[A]]){
+  def this(setOfSets: Set[Set[A]]) {
     this(setOfSets.map(_.toList).toList)
     var base: Long = 1
     sizes = this.setOfSets.map(_.size)
@@ -15,16 +15,6 @@ class CartesianProduct[A](private val setOfSets: List[List[A]]){
       base = base * size
     })
     max = base
-    /*
-    sizes = constraints.stream().map(OderConstraint::getSize).collect(Collectors.toList());
-            long base = 1;
-            for(int size : sizes){
-                bases.add(base);
-                base *= size;
-            }
-            i = 0;
-            max = estimateSize() - 1;
-     */
   }
 
   def hasNext() = i < max
@@ -38,14 +28,4 @@ class CartesianProduct[A](private val setOfSets: List[List[A]]){
     i = i + 1
     ret.toSet
   }
-  /*
-    private Set<Pair> get(long num){
-        Set<Pair> ret = new HashSet<>();
-        Iterator<Long> baseIt = bases.iterator();
-        for(OderConstraint constraint : constraints){
-            ret.addAll(constraint.get((int) ((num/baseIt.next())%constraint.getSize())));
-        }
-        return ret;
-    }
-   */
 }
