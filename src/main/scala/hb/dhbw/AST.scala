@@ -5,6 +5,7 @@ final case class Method(retType: Type, name: String, params: List[(Type, String)
 
 sealed trait Type
 final case class RefType(name: String, params: List[Type]) extends Type
+final case class GenericType(name: String) extends Type
 final case class TypeVariable(name: String) extends Type
 
 sealed trait Expr
@@ -20,9 +21,12 @@ object ASTBuilder {
 
     var tpvNum = 0
 
-    def fromParseTree(toAst: List[ParserClass]) = toAst.map(c => Class(c.name, c.params.map(p => (nTypeToType(p._1), nTypeToType(p._2))),
-      nTypeToType(c.superType).asInstanceOf[RefType],
-      c.fields.map(f => (nTypeToType(f._1),f._2)), c.methods.map(m => Method(freshTPV(), m.name, m.params.map(p => (freshTPV(), p)), m.retExpr))))
+    def fromParseTree(toAst: List[ParserClass]) = toAst.map(c => {
+      val genericNames = c.params.map(_._1).map(_.name).toSet
+      Class(c.name, c.params.map(p => (nTypeToType(p._1, genericNames), nTypeToType(p._2, genericNames))),
+        nTypeToType(c.superType, genericNames).asInstanceOf[RefType],
+        c.fields.map(f => (nTypeToType(f._1, genericNames),f._2)), c.methods.map(m => Method(freshTPV(), m.name, m.params.map(p => (freshTPV(), p)), m.retExpr)))
+    })
 
     private def freshTPV() = {
       def numToLetter(num: Int) = {
@@ -39,6 +43,11 @@ object ASTBuilder {
       tpvNum = tpvNum+1
       TypeVariable(numToLetter(tpvNum))
     }
-    private def nTypeToType(t : NType): Type = RefType(t.name, t.params.map(nTypeToType))
+
+    private def nTypeToType(t : NType, genericNames: Set[String]): Type = if(t.params.isEmpty && genericNames.contains(t.name)) {
+      GenericType(t.name)
+    }else{
+      RefType(t.name, t.params.map(p => nTypeToType(p, genericNames)))
+    }
   }
 }

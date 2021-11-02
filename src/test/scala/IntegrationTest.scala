@@ -27,6 +27,11 @@ class IntegrationTest extends FunSuite {
     println(result.map(Main.prettyPrint(_)))
   }
 
+  test("GenericVar"){
+    val result = FJTypeinference.typeinference("class List<A extends Object> extends Object{\nA a;\n\nget(){ return this.a;\n\n}\n}\n\n\nclass Test extends Object{\nList<String> test;\n\nm(a){\n   return this.test.get();\n}\n\n}")
+    println(result.map(Main.prettyPrint(_)))
+  }
+
   test("IdentCallExample"){
     val result = FJTypeinference.typeinference("class Test extends Object{\n\n  m(a,b){return this.m(a);\n}\nm(a){return a;}\n}")
     println(result.map(Main.prettyPrint(_)))
@@ -37,4 +42,8 @@ class IntegrationTest extends FunSuite {
     println(result.map(Main.prettyPrint(_)))
   }
 
+  test("GetMethods"){
+    val result = FJTypeinference.typeinference("class Test extends Object{\nget(){ return this.get().get();}\n}\n\nclass Test2 extends Object{\nget(){ return this;}\n}" )
+    println(result.map(Main.prettyPrint(_)))
+  }
 }

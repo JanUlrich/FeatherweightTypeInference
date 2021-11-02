@@ -13,15 +13,25 @@ object FJTypeinference {
   private def convertOrConstraints(constraints: List[Constraint]): Set[Set[Set[UnifyConstraint]]] = constraints.map(
     convertOrCons
   ).toSet
+  def convertType(t: Type): UnifyType = t match {
+    case GenericType(name) => UnifyRefType(name, List())
+    case RefType(n, p) => UnifyRefType(n,p.map(convertType))
+    case TypeVariable(n) => UnifyTV(n)
+  }
+
   private def convertSingleConstraint(constraint: Constraint) = constraint match {
-    case LessDot(l, r) => UnifyLessDot(l,r)
-    case EqualsDot(l, r) => UnifyEqualsDot(l,r)
+    case LessDot(l, r) => UnifyLessDot(convertType(l),convertType(r))
+    case EqualsDot(l, r) => UnifyEqualsDot(convertType(l),convertType(r))
     case _ => throw new Exception("Error: Möglicherweise zu tiefe Verschachtelung von OrConstraints")
   }
 
+  private def generateFC(ast: List[Class]): FiniteClosure = new FiniteClosure(
+    ast.map(c => (cToUnifyType(c), convertType(c.superType).asInstanceOf[UnifyRefType])).toSet)
+  private def cToUnifyType(c: Class) = UnifyRefType(c.name, c.params.map(it => convertType(it._1)))
+
   def typeinference(str: String): Either[String, Set[Set[UnifyConstraint]]] = {
     val ast = Parser.parse(str).map(ASTBuilder.fromParseTree(_))
-    val typeResult = ast.map(TYPE.generateConstraints(_))
+    val typeResult = ast.map(ast => TYPE.generateConstraints(ast, generateFC(ast)))
     val unifyResult = typeResult.map(res => Unify.unify(convertOrConstraints(res._1), res._2))
     unifyResult
   }

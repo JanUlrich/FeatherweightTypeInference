@@ -64,10 +64,16 @@ object Main {
     case UnifyLessDot(a, b) => "("+prettyPrintHTML(a)+" <. "+prettyPrintHTML(b)+")"
     case UnifyEqualsDot(a, b) => "("+prettyPrintHTML(a)+" =. "+prettyPrintHTML(b)+")"
   }
+  def prettyPrintHTML(t: UnifyType): String = t match {
+    case UnifyRefType(name, List()) => name
+    case UnifyRefType(name, params) => name + "&lt;" + params.map(prettyPrintHTML).mkString(", ") + "&gt;"
+    case UnifyTV(name) => "<b>" + name + "</b>"
+  }
   def prettyPrintHTML(t: Type): String = t match {
     case RefType(name, List()) => name
     case RefType(name, params) => name + "&lt;" + params.map(prettyPrintHTML).mkString(", ") + "&gt;"
     case TypeVariable(name) => "<b>" + name + "</b>"
+    case GenericType(name) => name
   }
 
   def prettyPrint(unifyResult : Set[Set[UnifyConstraint]]): String = unifyResult.map(
@@ -81,6 +87,11 @@ object Main {
     case RefType(name, List()) => name
     case RefType(name, params) => name + "<" + params.map(prettyPrint).mkString(", ") + ">"
     case TypeVariable(name) => "_" + name + "_"
+    case GenericType(name) => name
   }
-
+  def prettyPrint(t: UnifyType): String = t match {
+    case UnifyRefType(name, List()) => name
+    case UnifyRefType(name, params) => name + "<" + params.map(prettyPrint).mkString(", ") + ">"
+    case UnifyTV(name) => "_" + name + "_"
+  }
 }
