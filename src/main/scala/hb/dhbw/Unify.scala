@@ -81,6 +81,8 @@ object Unify {
       case UnifyLessDot(UnifyTV(_), UnifyRefType(_,_)) => true
       case UnifyEqualsDot(UnifyTV(_), UnifyRefType(_,_)) => true
       case UnifyEqualsDot(UnifyRefType(_,_),UnifyTV(_)) => true
+      case UnifyEqualsDot(UnifyRefType(_,_),UnifyRefType(_,_)) => true
+      case UnifyLessDot(UnifyRefType(_,_),UnifyRefType(_,_)) => true
       case _ => false
     })
     val eqSet = cartesianProduct(Set(Set(eq1)) ++ Set(Set(eq2)) ++ aUnifyLessDotCCons ++ cUnifyLessDotACons)
