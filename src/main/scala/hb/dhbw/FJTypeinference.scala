@@ -31,16 +31,20 @@ object FJTypeinference {
 
   def typeinference(str: String): Either[String, Set[Set[UnifyConstraint]]] = {
     val ast = Parser.parse(str).map(ASTBuilder.fromParseTree(_))
+
     val typeResult = ast.map(ast => {
-      /*ast.foldLeft(List())((cOld, c) => {
-        val typeResult = TYPE.generateConstraints(ast, generateFC(ast))
+      var unifyResults = Set[Set[Set[UnifyConstraint]]]()
+      ast.foldLeft(List[Class]())((cOld, c) => {
+        val newClassList = cOld :+ c
+        val typeResult = TYPE.generateConstraints(newClassList, generateFC(newClassList))
         val unifyResult = Unify.unify(convertOrConstraints(typeResult._1), typeResult._2)
-        //TODO: Insert intersection types
-        List(c)
-      }) */
-      TYPE.generateConstraints(ast, generateFC(ast))
+        //Insert intersection types
+        val typeInsertedC = InsertTypes.insert(unifyResult, c)
+        unifyResults = unifyResults + unifyResult
+        cOld :+ typeInsertedC
+      })
+      unifyResults
     })
-    val unifyResult = typeResult.map(res => Unify.unify(convertOrConstraints(res._1), res._2))
-    unifyResult
+    typeResult.map(_.flatten)
   }
 }
