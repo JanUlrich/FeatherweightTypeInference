@@ -67,7 +67,7 @@ object TYPE {
         val (rty, cons) = TYPEExpr(e, localVars, ast)
         val es = params.map(ex => TYPEExpr(ex, localVars, ast))
         val methods = findMethods(name, es.size, ast)
-        val consM = methods.map(m => AndConstraint(
+        val consM = methods.map(m => AndConstraint(m._2.genericParams ++
           List(EqualsDot(rty, cToType(m._1)), EqualsDot(a, m._2.retType))
           ++ m._2.params.map(_._1).zip(es.map(_._1)).map(a => LessDot(a._2, a._1))
         ))
@@ -85,7 +85,7 @@ object TYPE {
     private def findFields(f: String, ast: List[Class]) =
       ast.flatMap(c => c.fields.filter(field => field._2.equals(f)).map(it => (c, it._1)))
 
-    private def cToType(c: Class) = RefType(c.name, c.params.map(it => it._1))
+    private def cToType(c: Class) = RefType(c.name, c.genericParams.map(it => it._1))
 
   }
 }

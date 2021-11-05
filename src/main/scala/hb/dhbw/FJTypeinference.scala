@@ -27,7 +27,7 @@ object FJTypeinference {
 
   private def generateFC(ast: List[Class]): FiniteClosure = new FiniteClosure(
     ast.map(c => (cToUnifyType(c), convertType(c.superType).asInstanceOf[UnifyRefType])).toSet)
-  private def cToUnifyType(c: Class) = UnifyRefType(c.name, c.params.map(it => convertType(it._1)))
+  private def cToUnifyType(c: Class) = UnifyRefType(c.name, c.genericParams.map(it => convertType(it._1)))
 
   def typeinference(str: String): Either[String, Set[Set[UnifyConstraint]]] = {
     val ast = Parser.parse(str).map(ASTBuilder.fromParseTree(_))

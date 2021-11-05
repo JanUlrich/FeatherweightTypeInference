@@ -1,7 +1,7 @@
 package hb.dhbw
 
-final case class Class(name: String, params: List[(Type,Type)], superType: RefType, fields: List[(Type,String)], methods: List[Method])
-final case class Method(retType: Type, name: String, params: List[(Type, String)], retExpr: Expr)
+final case class Class(name: String, genericParams: List[(Type,Type)], superType: RefType, fields: List[(Type,String)], methods: List[Method])
+final case class Method(genericParams: List[Constraint], retType: Type, name: String, params: List[(Type, String)], retExpr: Expr)
 
 sealed trait Type
 final case class RefType(name: String, params: List[Type]) extends Type
@@ -25,7 +25,7 @@ object ASTBuilder {
       val genericNames = c.params.map(_._1).map(_.name).toSet
       Class(c.name, c.params.map(p => (nTypeToType(p._1, genericNames), nTypeToType(p._2, genericNames))),
         nTypeToType(c.superType, genericNames).asInstanceOf[RefType],
-        c.fields.map(f => (nTypeToType(f._1, genericNames),f._2)), c.methods.map(m => Method(freshTPV(), m.name, m.params.map(p => (freshTPV(), p)), m.retExpr)))
+        c.fields.map(f => (nTypeToType(f._1, genericNames),f._2)), c.methods.map(m => Method(List(), freshTPV(), m.name, m.params.map(p => (freshTPV(), p)), m.retExpr)))
     })
 
     private def freshTPV() = {
