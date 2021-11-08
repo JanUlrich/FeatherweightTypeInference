@@ -21,9 +21,10 @@ object Parser {
 
   def fieldVar[_: P]: P[Expr] = P( ".".! ~ ident ).map(ite => FieldVar(null, ite._2) )
   def prefixMethodCall[_: P]: P[Expr] = P( "." ~ methodCall)
-  def methodCall[_: P]: P[MethodCall] =P( ident ~ "(".! ~ (expr ~ (",".! ~ expr).rep.map(_.toList.map{_._2})).? ~ ")".! ).map(ite => MethodCall(null, ite._1, ite._3.map { ite => ite._1 :: ite._2 } .getOrElse(List.empty)) )
+  def methodCall[_: P]: P[MethodCall] =P( ident ~ paramList ).map(ite => MethodCall(null, ite._1, ite._2) )
+  def paramList[_: P] : P[List[Expr]]= P("(".! ~ (expr ~ (",".! ~ expr).rep.map(_.toList.map{_._2})).? ~ ")".! ).map(ite => ite._2.map(params => params._1 :: params._2).getOrElse(List.empty))
   def variable[_: P]: P[Expr] = P(ident).map(LocalVar)
-  def expr[_: P]: P[Expr] = P( variable ~ (prefixMethodCall | fieldVar).rep.map(_.toList) )
+  def expr[_: P]: P[Expr] = constructor | P( variable ~ (prefixMethodCall | fieldVar).rep.map(_.toList) )
     .map(ite => ite._2.foldLeft(ite._1) { (e1 : Expr, e2 : Expr) =>
       e2 match{
         case MethodCall(_, name, e3) => MethodCall(e1, name, e3)

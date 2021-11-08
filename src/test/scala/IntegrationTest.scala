@@ -46,4 +46,10 @@ class IntegrationTest extends FunSuite {
     val result = FJTypeinference.typeinference("class Test extends Object{\nget(){ return this.get().get();}\n}\n\nclass Test2 extends Object{\nget(){ return this;}\n}" )
     println(result.map(Main.prettyPrint(_)))
   }
+
+  test("constructorTest"){
+    val input= "class Test extends Object{m(){ return new Test();}}"
+    val result = FJTypeinference.typeinference(input )
+    println(result.map(Main.prettyPrint(_)))
+  }
 }

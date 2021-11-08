@@ -15,6 +15,10 @@ class ParserTest extends FunSuite {
     println(fastparse.parse(("new Test(a)"), hb.dhbw.Parser.constructor(_)))
   }
 
+  test("Parser.constructorExpression"){
+    println(fastparse.parse(("new Test(a)"), hb.dhbw.Parser.expr(_)))
+  }
+
   test("Parser.type"){
     println(fastparse.parse("Test<Test<Object>>", hb.dhbw.Parser.typeParser(_)))
   }

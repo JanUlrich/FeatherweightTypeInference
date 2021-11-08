@@ -50,7 +50,7 @@ object TYPE {
       LessDot(rty, method.retType) :: cons
     }
 
-    private def TYPEExpr(expr: Expr, localVars: List[(Type, String)],ast: List[Class]) : (Type, List[Constraint]) =expr match {
+    private def TYPEExpr(expr: Expr, localVars: List[(Type, String)], ast: List[Class]) : (Type, List[Constraint]) =expr match {
       case LocalVar(n) => localVars.find(it => it._2.equals(n)).map(p => (p._1, List()))
         .getOrElse(throw new Exception("Local Variable "+ n + " not found"))
       case FieldVar(e, f) => {
@@ -75,7 +75,12 @@ object TYPE {
         (a, retCons)
       }
       case Constructor(className, params) => {
-        throw new NotImplementedError()
+        val genericReplace = new GenericTypeReplaceMonad(this)
+        val es = params.map(ex => TYPEExpr(ex, localVars, ast))
+        val cl = findClasses(className, ast)
+        val retCons = es.flatMap(_._2.map(genericReplace.replaceGenerics(_))) ++
+          cl.genericParams.map(gp => LessDot(genericReplace.replaceGenerics(gp._1), genericReplace.replaceGenerics(gp._2)))
+        (RefType(className, cl.genericParams.map(_._1).map(genericReplace.replaceGenerics(_))), retCons)
       }
     }
 
@@ -84,6 +89,8 @@ object TYPE {
 
     private def findFields(f: String, ast: List[Class]) =
       ast.flatMap(c => c.fields.filter(field => field._2.equals(f)).map(it => (c, it._1)))
+
+    def findClasses(className: String, ast: List[Class]) = ast.filter(c => c.name.equals(className)).head
 
     private def cToType(c: Class) = RefType(c.name, c.genericParams.map(it => it._1))
 
