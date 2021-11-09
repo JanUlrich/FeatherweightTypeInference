@@ -78,7 +78,8 @@ object TYPE {
         val genericReplace = new GenericTypeReplaceMonad(this)
         val es = params.map(ex => TYPEExpr(ex, localVars, ast))
         val cl = findClasses(className, ast)
-        val retCons = es.flatMap(_._2.map(genericReplace.replaceGenerics(_))) ++
+        val paramCons = cl.fields.map(_._1).zip(es.map(_._1)).map(pair => genericReplace.replaceGenerics(LessDot(pair._2, pair._1)))
+        val retCons = paramCons ++ es.flatMap(_._2.map(genericReplace.replaceGenerics(_))) ++
           cl.genericParams.map(gp => LessDot(genericReplace.replaceGenerics(gp._1), genericReplace.replaceGenerics(gp._2)))
         (RefType(className, cl.genericParams.map(_._1).map(genericReplace.replaceGenerics(_))), retCons)
       }

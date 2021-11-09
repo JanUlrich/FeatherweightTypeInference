@@ -52,4 +52,10 @@ class IntegrationTest extends FunSuite {
     val result = FJTypeinference.typeinference(input )
     println(result.map(Main.prettyPrint(_)))
   }
+
+  test("fieldVar access"){
+    val input ="class List<A extends Object> extends Object{\nA f;\nget(){ return this.f; }\n}\n\nclass Test2 extends Object{\nget(){ return new List(this).get();}\n}"
+    val result = FJTypeinference.typeinference(input )
+    println(result.map(Main.prettyPrint(_)))
+  }
 }
