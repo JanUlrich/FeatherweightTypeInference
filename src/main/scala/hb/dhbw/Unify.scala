@@ -42,7 +42,9 @@ object Unify {
     step2Results.flatMap(eqSet => {
       val (substResult, unifier) = substStep(eqSet)
       if(!unifier.isDefined){
-        Set(substResult)
+        if(isSolvedForm(substResult))
+          Set(substResult)
+        else Set()
       }else{
         unify(Set(Set(substResult)), fc).map(s => s + unifier.get)
       }
@@ -167,6 +169,12 @@ object Unify {
     )
   }
 
+  def eraseRule(eq: Set[UnifyConstraint]) =
+    eq.filter(_ match {
+      case UnifyEqualsDot(UnifyTV(a), UnifyTV(b)) => ! a.equals(b)
+      case _ => true
+    })
+
   private def isLinked(a: UnifyTV, b: UnifyTV, aUnifyLessDota: Set[UnifyLessDot]): Boolean = {
     def getRightSides(of: UnifyTV) ={
       aUnifyLessDota.filter(c => c.left.asInstanceOf[UnifyTV].name.equals(of.name))
@@ -240,6 +248,29 @@ object Unify {
     })
   }
 
+  def isSolvedForm(eq: Set[UnifyConstraint]) =
+    eq.filter(_ match {
+      case UnifyLessDot(UnifyTV(a), UnifyTV(b)) => true //isIsolatedTV(UnifyTV(a), eq) && isIsolatedTV(UnifyTV(b), eq)
+      case UnifyLessDot(UnifyTV(a), UnifyRefType(n, params)) => !getAllTvs(UnifyRefType(n, params)).contains(UnifyTV(a))
+      case UnifyEqualsDot(UnifyTV(a), UnifyRefType(n, params)) => !getAllTvs(UnifyRefType(n, params)).contains(UnifyTV(a))
+      case UnifyEqualsDot(UnifyTV(_), UnifyTV(_)) => true
+      case _ => false
+    }).size == eq.size
+
+  private def getAllTvs(in: UnifyType): Set[UnifyTV] = in match {
+    case UnifyTV(a) => Set(UnifyTV(a))
+    case UnifyRefType(_, params) => params.flatMap(getAllTvs(_)).toSet
+  }
+  def isIsolatedTV(tv: UnifyTV, eq: Set[UnifyConstraint]) = {
+    val notIsolatedTVs: Set[UnifyTV] = eq.flatMap(_ match {
+      case UnifyLessDot(UnifyTV(_), UnifyTV(_)) => Set[UnifyTV]()
+      case UnifyEqualsDot(UnifyTV(_), UnifyTV(_)) => Set[UnifyTV]()
+      case UnifyLessDot(a,b) => getAllTvs(a) ++ getAllTvs(b)
+      case UnifyEqualsDot(a,b) => getAllTvs(a) ++ getAllTvs(b)
+    })
+    !notIsolatedTVs.contains(tv)
+  }
+
   private def doWhileSome(fun: Set[UnifyConstraint]=>Option[Set[UnifyConstraint]], eqTemp: Set[UnifyConstraint]): Set[UnifyConstraint] =
     fun(eqTemp).map(eqTemp2 => doWhileSome(fun,eqTemp2)).getOrElse(eqTemp)
 
@@ -248,7 +279,7 @@ object Unify {
     var eqFinish: Set[UnifyConstraint] = eq
     do{
       eqNew = doWhileSome(Unify.equalsRule,eqFinish) //We have to apply equals rule first, to get rid of circles
-      eqFinish = swapRule(reduceRule(matchRule(adoptRule(adaptRule(eqNew, fc), fc), fc)))
+      eqFinish = eraseRule(swapRule(reduceRule(matchRule(adoptRule(adaptRule(eqNew, fc), fc), fc))))
     }while(!eqNew.equals(eqFinish))
     eqNew
   }

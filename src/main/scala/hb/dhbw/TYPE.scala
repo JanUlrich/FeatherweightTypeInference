@@ -61,6 +61,7 @@ object TYPE {
         val orCons = OrConstraint(fields.map(f => AndConstraint(List(EqualsDot(rty, genericReplace.replaceGenerics(cToType(f._1))), EqualsDot(a, genericReplace.replaceGenerics(f._2))))))
         (a, orCons :: cons)
       }
+      //TODO: generic Replace a whole constraint set. Change it also in the paper
       case MethodCall(e, name, params) => {
         val genericReplace = new GenericTypeReplaceMonad(this)
         val a = freshTPV()
