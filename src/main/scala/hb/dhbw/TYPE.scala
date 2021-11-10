@@ -15,6 +15,8 @@ object TYPE {
   private class GenericTypeReplaceMonad(tpvs: TYPEMonad){
     var genericNameToTVMap: Map[String, TypeVariable] = Map()
 
+    def replaceGenerics(inConstraints: List[Constraint]): List[Constraint] = inConstraints.map(replaceGenerics(_))
+
     def replaceGenerics(inConstraint: Constraint): Constraint = inConstraint match {
       case OrConstraint(cons) => OrConstraint(cons.map(replaceGenerics(_)))
       case AndConstraint(andCons) => AndConstraint(andCons.map(replaceGenerics(_)))
@@ -37,7 +39,11 @@ object TYPE {
     var tpvNum = 0
 
     def TYPEClass(ast: List[Class], fc: FiniteClosure) = {
-      (ast.flatMap(cl => cl.methods.flatMap(m => TYPEMethod(m, cToType(cl), ast))), fc)
+
+      (ast.flatMap(cl => {
+        val thisType = RefType(cl.name, cl.genericParams.map(it => RefType(it._1.asInstanceOf[GenericType].name, List())))
+        cl.methods.flatMap(m => TYPEMethod(m, thisType, ast))
+      }), fc)
     }
 
     def freshTPV() = {
@@ -58,10 +64,9 @@ object TYPE {
         val (rty, cons) = TYPEExpr(e, localVars, ast)
         val fields = findFields(f, ast)
         val a = freshTPV()
-        val orCons = OrConstraint(fields.map(f => AndConstraint(List(EqualsDot(rty, genericReplace.replaceGenerics(cToType(f._1))), EqualsDot(a, genericReplace.replaceGenerics(f._2))))))
-        (a, orCons :: cons)
+        val orCons = OrConstraint(fields.map(f => AndConstraint(List(EqualsDot(rty, cToType(f._1)), EqualsDot(a, f._2)))))
+        (a, genericReplace.replaceGenerics(orCons :: cons))
       }
-      //TODO: generic Replace a whole constraint set. Change it also in the paper
       case MethodCall(e, name, params) => {
         val genericReplace = new GenericTypeReplaceMonad(this)
         val a = freshTPV()
@@ -72,17 +77,17 @@ object TYPE {
           List(EqualsDot(rty, cToType(m._1)), EqualsDot(a, m._2.retType))
           ++ m._2.params.map(_._1).zip(es.map(_._1)).map(a => LessDot(a._2, a._1))
         ))
-        val retCons = (cons ++ es.flatMap(_._2) ++ List(OrConstraint(consM))).map(genericReplace.replaceGenerics(_))
-        (a, retCons)
+        val retCons = (cons ++ es.flatMap(_._2) ++ List(OrConstraint(consM)))
+        (a, genericReplace.replaceGenerics(retCons))
       }
       case Constructor(className, params) => {
         val genericReplace = new GenericTypeReplaceMonad(this)
         val es = params.map(ex => TYPEExpr(ex, localVars, ast))
         val cl = findClasses(className, ast)
-        val paramCons = cl.fields.map(_._1).zip(es.map(_._1)).map(pair => genericReplace.replaceGenerics(LessDot(pair._2, pair._1)))
-        val retCons = paramCons ++ es.flatMap(_._2.map(genericReplace.replaceGenerics(_))) ++
-          cl.genericParams.map(gp => LessDot(genericReplace.replaceGenerics(gp._1), genericReplace.replaceGenerics(gp._2)))
-        (RefType(className, cl.genericParams.map(_._1).map(genericReplace.replaceGenerics(_))), retCons)
+        val paramCons = cl.fields.map(_._1).zip(es.map(_._1)).map(pair => LessDot(pair._2, pair._1))
+        val retCons = paramCons ++ es.flatMap(_._2) ++
+          cl.genericParams.map(gp => LessDot(gp._1, gp._2))
+        (RefType(className, cl.genericParams.map(_._1).map(genericReplace.replaceGenerics(_))), genericReplace.replaceGenerics(retCons))
       }
     }
 
