@@ -9,7 +9,7 @@ final case class LessDot(l: Type, r: Type) extends Constraint
 
 object TYPE {
   def generateConstraints(c: List[Class], finiteClosure: FiniteClosure) = {
-    new TYPEMonad().TYPEClass(c, finiteClosure)
+    new TYPEMonad().TYPEClass(c.last, c, finiteClosure)
   }
 
   private class GenericTypeReplaceMonad(tpvs: TYPEMonad){
@@ -38,12 +38,11 @@ object TYPE {
   private class TYPEMonad{
     var tpvNum = 0
 
-    def TYPEClass(ast: List[Class], fc: FiniteClosure) = {
-
-      (ast.flatMap(cl => {
-        val thisType = RefType(cl.name, cl.genericParams.map(it => RefType(it._1.asInstanceOf[GenericType].name, List())))
-        cl.methods.flatMap(m => TYPEMethod(m, thisType, ast))
-      }), fc)
+    def TYPEClass(currentClass: Class, ast: List[Class], fc: FiniteClosure) = {
+      ({
+        val thisType = RefType(currentClass.name, currentClass.genericParams.map(it => RefType(it._1.asInstanceOf[GenericType].name, List())))
+        currentClass.methods.flatMap(m => TYPEMethod(m, thisType, ast))
+      }, fc)
     }
 
     def freshTPV() = {
