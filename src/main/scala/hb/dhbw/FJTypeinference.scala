@@ -42,7 +42,7 @@ object FJTypeinference {
       ast.foldLeft(List[Class]())((cOld, c) => {
         val newClassList = cOld :+ c
         val typeResult = TYPE.generateConstraints(newClassList, generateFC(newClassList))
-        val unifyResult = Unify.unify(convertOrConstraints(typeResult._1), typeResult._2)
+        val unifyResult = Unify.unifyIterative(convertOrConstraints(typeResult._1), typeResult._2)
         //Insert intersection types
         val typeInsertedC = InsertTypes.insert(unifyResult, c)
         unifyResults = unifyResults + unifyResult

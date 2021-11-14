@@ -22,15 +22,28 @@ final case class AEqualsN(a: TypeVariable, n: ResultRefType) extends UnifyResult
 
 object Unify {
 
-  def unifyIteratove(orCons: Set[Set[Set[UnifyConstraint]]], fc: FiniteClosure) : Set[Set[UnifyConstraint]] = {
-    var eqSets = new CartesianProduct[Set[UnifyConstraint]](orCons)
-    while(eqSets.hasNext()){
-      val eqSet = eqSets.nextProduct()
-      val rulesResult = applyRules(fc)(eqSet.flatten)
-      val step2Result = step2(rulesResult, fc)
+  def unifyIterative(orCons: Set[Set[Set[UnifyConstraint]]], fc: FiniteClosure) : Set[Set[UnifyConstraint]] = {
+    def getNext[A](from: Set[(CartesianProduct[A],Set[UnifyConstraint])])=
+      from.find(_._1.hasNext()).map(it => (it._1.nextProduct(), it._2))
 
+    var eqSets: Set[(CartesianProduct[Set[UnifyConstraint]],Set[UnifyConstraint])] =
+      Set((new CartesianProduct[Set[UnifyConstraint]](orCons), Set()))
+    var result: Set[UnifyConstraint] = null
+    var it: Option[(Set[Set[UnifyConstraint]], Set[UnifyConstraint])] = getNext(eqSets)
+    var results: Set[Set[UnifyConstraint]] = Set()
+    while(it.isDefined){
+      val eqSet = it.get
+      val rulesResult = applyRules(fc)(eqSet._1.flatten)
+      val step2Result = step2(rulesResult, fc)
+      val substResult = step2Result.map(eqSet => substStep(eqSet))
+      val newEqs = substResult.filter(res => res._2.isDefined).map(res => (res._1, res._2.get))
+      eqSets = eqSets ++ newEqs.map(it => (new CartesianProduct[Set[UnifyConstraint]](Set(Set(it._1))), eqSet._2 + it._2))
+      result = substResult.find(p => !p._2.isDefined && isSolvedForm(p._1)).map(it => it._1 ++ eqSet._2).getOrElse(null)
+      if(result != null)
+        results = results + result
+      it = getNext(eqSets)
     }
-    Set()
+    results
   }
 
   def unify(orCons: Set[Set[Set[UnifyConstraint]]], fc: FiniteClosure) : Set[Set[UnifyConstraint]] = {
