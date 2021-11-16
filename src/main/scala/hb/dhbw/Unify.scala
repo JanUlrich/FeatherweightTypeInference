@@ -41,19 +41,22 @@ object Unify {
 
     var eqSets: Set[CartesianProduct[Set[UnifyConstraint]]] =
       Set(new CartesianProduct[Set[UnifyConstraint]](orCons))
-    var result: Set[UnifyConstraint] = null
     var it: Option[Set[Set[UnifyConstraint]]] = getNext(eqSets)
     var results: Set[Set[UnifyConstraint]] = Set()
     while(it.isDefined){
       val eqSet = it.get
       val rulesResult = applyRules(fc)(eqSet.flatten)
       val step2Result = step2(rulesResult, fc)
-      val substResult = step2Result.map(eqSet => substStep(eqSet))
-      val newEqs = substResult.filter(_.hasChanged)
-      eqSets = eqSets ++ newEqs.map(it => new CartesianProduct[Set[UnifyConstraint]](Set(Set(it.result))))
-      result = substResult.find(p => !p.hasChanged() && isSolvedForm(p.result)).map(it => it.result).getOrElse(null)
-      if(result != null)
-        results = results + result
+      while(step2Result.hasNext() && results.isEmpty){
+        val substResult = substStep(step2Result.nextProduct().flatten)
+        substResult match{
+          case UnchangedSet(eq) => if(isSolvedForm(eq)){
+            results = results + eq
+          }
+          case ChangedSet(eq) =>
+            eqSets = eqSets + new CartesianProduct[Set[UnifyConstraint]](Set(Set(eq)))
+        }
+      }
       it = getNext(eqSets)
     }
     results
@@ -125,9 +128,9 @@ object Unify {
       case UnifyLessDot(UnifyRefType(_,_),UnifyRefType(_,_)) => true
       case _ => false
     })
-    val eqSet = cartesianProduct(Set(Set(eq1)) ++ Set(Set(eq2)) ++ aUnifyLessDotCCons ++ cUnifyLessDotACons)
-    val ret = eqSet.map( s => s.flatten)
-    ret
+    val eqSet = new CartesianProduct[Set[UnifyConstraint]](
+      Set(Set(eq1)) ++ Set(Set(eq2)) ++ aUnifyLessDotCCons ++ cUnifyLessDotACons)
+    eqSet
   }
 
   private def getAUnifyLessDotC(from: Set[UnifyConstraint]) = from.filter(c => c match{
