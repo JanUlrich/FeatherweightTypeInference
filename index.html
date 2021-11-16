@@ -2,7 +2,8 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" type="text/css" href="index.css">
+      <link rel="stylesheet" type="text/css" href="index.css">
+      <link rel="stylesheet" type="text/css" href="default.min.css">
     <title>Type-inference for Featherweight Java</title>
   </head>
   <body>
@@ -17,12 +18,13 @@
           self = recursive_monster x } -->
       </div>
       <div id="right">
-          <div id="ast-output"></div>
+          <pre><div id="ast-output"></div></pre>
       </div>
   </div>
   <div id="bottom">
       <div id="unify-output"></div>
   </div>
+  <script type="text/javascript" src="highlight.min.js"></script>
   <script type="text/javascript" src="target/scala-2.13/fj-typeinference-fastopt/main.js"></script>
   <br/>
   <p>Credit: the CSS style sheet of this page was shamelessly stolen from <a href="https://github.com/LPTK/simple-algebraic-subtyping">the Simple-sub demo page</a>.</p>

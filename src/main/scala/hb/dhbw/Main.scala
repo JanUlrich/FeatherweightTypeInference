@@ -1,12 +1,26 @@
 package hb.dhbw
 
 import scala.util.Try
-import scala.scalajs.js.annotation.JSExportTopLevel
+import scala.scalajs.js.annotation.{JSExportTopLevel, JSGlobal}
 import org.scalajs.dom
 import org.scalajs.dom.document
-import org.scalajs.dom.raw.{Event, TextEvent, UIEvent, HTMLTextAreaElement}
+import org.scalajs.dom.raw.{Event, HTMLTextAreaElement, TextEvent, UIEvent}
+
+import scala.scalajs.js
+
+@js.native
+@JSGlobal
+object hljs extends js.Object {
+  def highlightAuto(code: String): HLJSResult = js.native
+}
+
+// @ScalaJSDefined
+class HLJSResult extends js.Object{
+  val value: String = ""
+}
 
 object Main {
+
   def main(args: Array[String]): Unit = {
     val source = document.querySelector("#fj-input")
     update(source.textContent)
@@ -24,14 +38,25 @@ object Main {
     val target = document.querySelector("#unify-output")
     target.innerHTML = FJTypeinference.typeinference(str).fold(
       (error) => error,
-      (result) => prettyPrintHTML(result)
+      (result) => hljs.highlightAuto(prettyPrintHTML(result)).value
     )
     val astOutput = document.querySelector("#ast-output")
     astOutput.innerHTML = Parser.parse(str).map( parseTree =>
-      prettyPrintHTMLAST(ASTBuilder.fromParseTree(parseTree))).merge
+      hljs.highlightAuto(prettyPrintAST(ASTBuilder.fromParseTree(parseTree))).value
+    ).merge
 
   }
 
+  def prettyPrintAST(ast: List[Class]): String = {
+    ast.map(cl => {
+      "class " + cl.name + "{\n" +
+        cl.methods.map(m => {
+          "    "+m.retType +" "+ m.name +"(" + ") {\n"+
+          "        return " + "TODO" + ";\n" +
+          "    }"
+      }).mkString("\n") + "\n}"
+    }).mkString("\n")
+  }
 
   def prettyPrintHTML(c: Class): String = {
     "class "+c.name+" extends " + prettyPrintHTML(c.superType) + "{</br>" +
