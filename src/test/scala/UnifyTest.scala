@@ -21,10 +21,10 @@ class UnifyTest extends FunSuite {
       UnifyLessDot(RefType("List", List(RefType("Object", List()))), TypeVariable("a"))), fc)
     println(step2)
   }
-*/
   test("Unify.applyRules.WrongEQSet"){
     val unifyRes = Unify.unify(Set(Set(Set(UnifyEqualsDot(UnifyRefType("List", List()),UnifyRefType("Object", List()))))), fc)
     println(unifyRes)
     assert(!unifyRes.isEmpty)
   }
+*/
 }

@@ -22,23 +22,36 @@ final case class AEqualsN(a: TypeVariable, n: ResultRefType) extends UnifyResult
 
 object Unify {
 
-  def unifyIterative(orCons: Set[Set[Set[UnifyConstraint]]], fc: FiniteClosure) : Set[Set[UnifyConstraint]] = {
-    def getNext[A](from: Set[(CartesianProduct[A],Set[UnifyConstraint])])=
-      from.find(_._1.hasNext()).map(it => (it._1.nextProduct(), it._2))
+  sealed trait Step4Result{
+    def hasChanged(): Boolean
+    def result: Set[UnifyConstraint]
+  }
+  final case class ChangedSet(eq: Set[UnifyConstraint]) extends Step4Result {
+    override def hasChanged(): Boolean = true
+    override def result: Set[UnifyConstraint] = eq
+  }
+  final case class UnchangedSet(eq: Set[UnifyConstraint]) extends Step4Result {
+    override def hasChanged(): Boolean = false
+    override def result: Set[UnifyConstraint] = eq
+  }
 
-    var eqSets: Set[(CartesianProduct[Set[UnifyConstraint]],Set[UnifyConstraint])] =
-      Set((new CartesianProduct[Set[UnifyConstraint]](orCons), Set()))
+  def unifyIterative(orCons: Set[Set[Set[UnifyConstraint]]], fc: FiniteClosure) : Set[Set[UnifyConstraint]] = {
+    def getNext[A](from: Set[CartesianProduct[A]])=
+      from.find(_.hasNext()).map(it => it.nextProduct())
+
+    var eqSets: Set[CartesianProduct[Set[UnifyConstraint]]] =
+      Set(new CartesianProduct[Set[UnifyConstraint]](orCons))
     var result: Set[UnifyConstraint] = null
-    var it: Option[(Set[Set[UnifyConstraint]], Set[UnifyConstraint])] = getNext(eqSets)
+    var it: Option[Set[Set[UnifyConstraint]]] = getNext(eqSets)
     var results: Set[Set[UnifyConstraint]] = Set()
     while(it.isDefined){
       val eqSet = it.get
-      val rulesResult = applyRules(fc)(eqSet._1.flatten)
+      val rulesResult = applyRules(fc)(eqSet.flatten)
       val step2Result = step2(rulesResult, fc)
       val substResult = step2Result.map(eqSet => substStep(eqSet))
-      val newEqs = substResult.filter(res => res._2.isDefined).map(res => (res._1, res._2.get))
-      eqSets = eqSets ++ newEqs.map(it => (new CartesianProduct[Set[UnifyConstraint]](Set(Set(it._1))), eqSet._2 + it._2))
-      result = substResult.find(p => !p._2.isDefined && isSolvedForm(p._1)).map(it => it._1 ++ eqSet._2).getOrElse(null)
+      val newEqs = substResult.filter(_.hasChanged)
+      eqSets = eqSets ++ newEqs.map(it => new CartesianProduct[Set[UnifyConstraint]](Set(Set(it.result))))
+      result = substResult.find(p => !p.hasChanged() && isSolvedForm(p.result)).map(it => it.result).getOrElse(null)
       if(result != null)
         results = results + result
       it = getNext(eqSets)
@@ -46,6 +59,7 @@ object Unify {
     results
   }
 
+  /*
   def unify(orCons: Set[Set[Set[UnifyConstraint]]], fc: FiniteClosure) : Set[Set[UnifyConstraint]] = {
     val eqSets = cartesianProduct(orCons)
     val step2Results = eqSets.flatMap(eqSet => {
@@ -63,7 +77,7 @@ object Unify {
       }
     })
   }
-
+*/
   def step2(eq : Set[UnifyConstraint], fc: FiniteClosure) ={
     val eq1 = eq.filter(c => c match{
       case UnifyLessDot(UnifyTV(_), UnifyTV(_)) => true
@@ -242,11 +256,27 @@ object Unify {
       case UnifyTV(a) => tv.equals(UnifyTV(a))
       case UnifyRefType(a,p) => paramsContain(tv, UnifyRefType(a,p))
     }).isDefined
-  def substStep(eq: Set[UnifyConstraint]) =  eq.find(c => c match {
-    case UnifyEqualsDot(UnifyTV(a), UnifyRefType(n, p)) => !paramsContain(UnifyTV(a), UnifyRefType(n,p))
-    case UnifyEqualsDot(UnifyTV(a), UnifyTV(b)) => !a.equals(b)
-    case _ => false
-  }).map(c => (subst(c.left.asInstanceOf[UnifyTV], c.right, eq.filter(!_.equals(c))), Some(c))).getOrElse((eq, None))
+  def substStep(eq: Set[UnifyConstraint]) = {
+    def substCall(eq: Set[UnifyConstraint]) = eq.find(c => c match {
+      case UnifyEqualsDot(UnifyTV(a), UnifyRefType(n, p)) => !paramsContain(UnifyTV(a), UnifyRefType(n,p))
+      case UnifyEqualsDot(UnifyTV(a), UnifyTV(b)) => !a.equals(b)
+      case _ => false
+    }).map(c => (subst(c.left.asInstanceOf[UnifyTV], c.right, eq.filter(!_.equals(c))), Some(c))).getOrElse((eq, None))
+
+    var substResult: (Set[UnifyConstraint], Option[UnifyConstraint]) = (eq, None)
+    var substVars: Set[UnifyConstraint] = Set()
+    do{
+      substResult = substCall(substResult._1)
+      substResult._2.map(it => {
+        substVars = substVars + it
+      })
+    }while(substResult._2.isDefined)
+    val result = substResult._1 ++ substVars
+    if(result.equals(eq))
+      UnchangedSet(eq)
+    else
+      ChangedSet(substResult._1 ++ substVars)
+  }
 
   private def substHelper(a: UnifyTV, withType: UnifyType,in: UnifyType) :UnifyType = in match {
     case UnifyRefType(n, p) => UnifyRefType(n,p.map(t => substHelper(a, withType, t)))
