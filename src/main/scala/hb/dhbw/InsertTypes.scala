@@ -70,9 +70,18 @@ object InsertTypes {
       case TypeVariable(name) => GenericType(name)
       case RefType(name, params) => RefType(name, params.map(replaceTVWithGeneric(_)))
     }
-    val genericRetType = replaceTVWithGeneric(into.retType)
-    val genericParams = into.params.map(p => (replaceTVWithGeneric(p._1), p._2))
+    def substType(t: Type) = constraints.map(_ match {
+      case EqualsDot(t1, t2) => if(t.equals(t1)) t2 else null
+      case _ => null
+    }).find(_ != null).getOrElse(t)
+
+    val genericRetType = substType(replaceTVWithGeneric(into.retType))
+    val genericParams = into.params.map(p => (substType(replaceTVWithGeneric(p._1)), p._2))
     val constraintsForMethod = getLinkedCons(Set(genericRetType) ++ genericParams.map(_._1), constraints)
+      .filter(_ match {
+        case LessDot(GenericType(_), RefType(_,_)) => true
+        case _ => false
+      })
     Method(into.genericParams ++ constraintsForMethod, genericRetType, into.name, genericParams, into.retExpr)
   }
   private def replaceTVWithGeneric(in: UnifyConstraint, genericNames: Set[String]): Constraint= in match {

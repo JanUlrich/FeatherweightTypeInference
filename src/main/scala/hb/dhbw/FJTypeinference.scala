@@ -34,9 +34,9 @@ object FJTypeinference {
   ).toSet)
   private def cToUnifyType(c: Class): UnifyRefType = UnifyRefType(c.name, c.genericParams.map(it => convertType(it._1)))
 
-  def typeinference(str: String): Either[String, Set[Set[UnifyConstraint]]] = {
+  def typeinference(str: String): Either[String, (Set[Set[UnifyConstraint]], List[Class])] = {
     val ast = Parser.parse(str).map(ASTBuilder.fromParseTree(_))
-
+    var typedClasses: List[Class] = List()
     val typeResult = ast.map(ast => {
       var unifyResults = Set[Set[Set[UnifyConstraint]]]()
       ast.foldLeft(List[Class]())((cOld, c) => {
@@ -45,11 +45,12 @@ object FJTypeinference {
         val unifyResult = Unify.unifyIterative(convertOrConstraints(typeResult._1), typeResult._2)
         //Insert intersection types
         val typeInsertedC = InsertTypes.insert(unifyResult, c)
+        typedClasses = typedClasses :+ typeInsertedC
         unifyResults = unifyResults + unifyResult
         cOld :+ typeInsertedC
       })
       unifyResults
     })
-    typeResult.map(_.flatten)
+    typeResult.map(it => (it.flatten, typedClasses))
   }
 }

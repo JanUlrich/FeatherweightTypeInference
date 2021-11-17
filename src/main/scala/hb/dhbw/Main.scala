@@ -36,23 +36,44 @@ object Main {
 
   def update(str: String): Unit = {
     val target = document.querySelector("#unify-output")
-    target.innerHTML = FJTypeinference.typeinference(str).fold(
+    val tiResult = FJTypeinference.typeinference(str)
+    target.innerHTML = tiResult.fold(
       (error) => error,
-      (result) => hljs.highlightAuto(prettyPrintHTML(result)).value
+      (result) => prettyPrintHTML(result._1)
     )
     val astOutput = document.querySelector("#ast-output")
-    astOutput.innerHTML = Parser.parse(str).map( parseTree =>
-      hljs.highlightAuto(prettyPrintAST(ASTBuilder.fromParseTree(parseTree))).value
-    ).merge
+    astOutput.innerHTML = tiResult.fold(
+      (error) => Parser.parse(str).map( parseTree =>
+        hljs.highlightAuto(prettyPrintAST(ASTBuilder.fromParseTree(parseTree))).value
+      ).merge,
+      (result) => {
+          hljs.highlightAuto(prettyPrintAST(result._2)).value
+      }
+    )
 
   }
 
   def prettyPrintAST(ast: List[Class]): String = {
+    def prettyPrintExpr(expr: Expr): String = expr match {
+      case LocalVar(x) => x
+      case FieldVar(e, f) => prettyPrintExpr(e)+"."+f
+      case MethodCall(e, name, params) => prettyPrintExpr(e)+"."+name+"("+params.map(prettyPrintExpr(_)).mkString(", ")+")"
+      case Constructor(className, params) => "new "+className+"(" + params.map(prettyPrintExpr(_)).mkString(", ") +")"
+    }
+    def prettyPrintType(l: Type): String = l match {
+      case RefType(name, List()) => name
+      case RefType(name, params) => name + "<" + params.map(prettyPrintType(_)).mkString(", ") + ">"
+      case GenericType(name) => name
+    }
+    def prettyPrintCons(constraint: Constraint)= constraint match{
+      case LessDot(l, r) => prettyPrintType(l) + " extends " + prettyPrintType(r)
+    }
     ast.map(cl => {
       "class " + cl.name + "{\n" +
         cl.methods.map(m => {
-          "    "+m.retType +" "+ m.name +"(" + ") {\n"+
-          "        return " + "TODO" + ";\n" +
+          "    "+m.genericParams.map(prettyPrintCons(_)).mkString(", ") + " " +
+           prettyPrintType(m.retType) +" "+ m.name +"(" + ") {\n"+
+          "        return " + prettyPrintExpr(m.retExpr) + ";\n" +
           "    }"
       }).mkString("\n") + "\n}"
     }).mkString("\n")
