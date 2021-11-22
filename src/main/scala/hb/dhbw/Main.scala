@@ -68,11 +68,22 @@ object Main {
     def prettyPrintCons(constraint: Constraint)= constraint match{
       case LessDot(l, r) => prettyPrintType(l) + " extends " + prettyPrintType(r)
     }
+    def prettyPrintGenericList(constraints: List[Constraint]) = {
+      if(constraints.isEmpty){
+        ""
+      }else{
+        "<" + constraints.map(prettyPrintCons(_)).mkString(", ") + ">"
+      }
+    }
     ast.map(cl => {
-      "class " + cl.name + "{\n" +
+      "class " + cl.name + prettyPrintGenericList(cl.genericParams.map(it => LessDot(it._1, it._2))) +
+        " extends " + prettyPrintType(cl.superType) + "{\n" +
+        cl.fields.map(f => {
+          prettyPrintType(f._1) + " " + f._2 + ";"
+        }).mkString("\n") +
         cl.methods.map(m => {
-          "    "+m.genericParams.map(prettyPrintCons(_)).mkString(", ") + " " +
-           prettyPrintType(m.retType) +" "+ m.name +"(" + ") {\n"+
+          "    "+ prettyPrintGenericList(m.genericParams) + " " +
+           prettyPrintType(m.retType) +" "+ m.name +"(" + m.params.map(tp=>prettyPrintType(tp._1) + " " + tp._2).mkString(", ") + ") {\n"+
           "        return " + prettyPrintExpr(m.retExpr) + ";\n" +
           "    }"
       }).mkString("\n") + "\n}"

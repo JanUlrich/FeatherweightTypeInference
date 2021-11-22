@@ -2,7 +2,12 @@ package hb.dhbw
 
 object InsertTypes {
 
-  def normalize(eq:Set[UnifyConstraint]) = {
+  /**
+   * Remove a <. b constraints
+   * @param eq
+   * @return
+   */
+  private def normalize(eq:Set[UnifyConstraint]) = {
     def substHelper(a: UnifyTV, withType: UnifyType,in: UnifyType) :UnifyType = in match {
       case UnifyRefType(n, p) => UnifyRefType(n,p.map(t => substHelper(a, withType, t)))
       case UnifyTV(n) =>
@@ -24,7 +29,7 @@ object InsertTypes {
       case _ => true
     })
     alessdotB.foreach(it => ret = subst(it.left.asInstanceOf[UnifyTV], it.right, ret))
-    ret
+    ret ++ alessdotB.map(cons => UnifyEqualsDot(cons.left, cons.right))
   }
 
   def insert(unifyResult: Set[Set[UnifyConstraint]], into: Class): Class = {
@@ -48,24 +53,26 @@ object InsertTypes {
     Class(into.name, into.genericParams, into.superType, into.fields, newMethods)
   }
 
-  private def insert(constraints: Set[Constraint], into: Method): Method = {
-    def getAllGenericTypes(from: Constraint): Set[Type] = from match {
-      case EqualsDot(a,b) => getAllGenerics(a) ++ getAllGenerics(b)
-      case LessDot(a,b) => getAllGenerics(a) ++ getAllGenerics(b)
-    }
-    def getAllGenerics(from: Type): Set[Type] = from match {
-      case RefType(name, params) => params.flatMap(getAllGenerics(_)).toSet
-      case GenericType(a) => Set(GenericType(a))
+  private def getLinkedConstraints(linkedTypes: Set[Type], in: Set[Constraint]): Set[Constraint] ={
+    var typesWithoutBounds = linkedTypes
+    in.flatMap(_ match {
+      case LessDot(GenericType(a), RefType(name, params)) => {
+        if(linkedTypes.contains(GenericType(a))){
+          typesWithoutBounds = typesWithoutBounds - GenericType(a)
+          val genericsInParams = params.filter(_ match {
+            case GenericType(_) => true
+            case _ => false
+          }).toSet
+          getLinkedConstraints(genericsInParams, in) +LessDot(GenericType(a), RefType(name, params))
+        }else{
+          Set()
+        }
+      }
       case _ => Set()
-    }
-    def getLinkedCons(linkedTypes: Set[Type], in: Set[Constraint]): Set[Constraint] ={
-      val linkedCons = in.filter(it => getAllGenericTypes(it).exists(linkedTypes.contains(_)))
-      val newLinkedTypes = linkedCons.flatMap(getAllGenericTypes(_))
-      if(newLinkedTypes.equals(linkedTypes))
-        linkedCons
-      else
-        getLinkedCons(newLinkedTypes, in)
-    }
+    }) ++ typesWithoutBounds.map(t => LessDot(t, RefType("Object", List())))
+  }
+
+  private def insert(constraints: Set[Constraint], into: Method): Method = {
     def replaceTVWithGeneric(in: Type): Type = in match {
       case TypeVariable(name) => GenericType(name)
       case RefType(name, params) => RefType(name, params.map(replaceTVWithGeneric(_)))
@@ -75,13 +82,16 @@ object InsertTypes {
       case _ => null
     }).find(_ != null).getOrElse(t)
 
+    def getAllGenerics(from: Type): Set[Type] = from match {
+      case RefType(name, params) => params.flatMap(getAllGenerics(_)).toSet
+      case GenericType(a) => Set(GenericType(a))
+    }
+
     val genericRetType = substType(replaceTVWithGeneric(into.retType))
     val genericParams = into.params.map(p => (substType(replaceTVWithGeneric(p._1)), p._2))
-    val constraintsForMethod = getLinkedCons(Set(genericRetType) ++ genericParams.map(_._1), constraints)
-      .filter(_ match {
-        case LessDot(GenericType(_), RefType(_,_)) => true
-        case _ => false
-      })
+    val genericsUsedInMethod = (Set(genericRetType) ++ genericParams.map(_._1)).flatMap(getAllGenerics(_))
+    val constraintsForMethod = getLinkedConstraints(genericsUsedInMethod, constraints)
+
     Method(into.genericParams ++ constraintsForMethod, genericRetType, into.name, genericParams, into.retExpr)
   }
   private def replaceTVWithGeneric(in: UnifyConstraint, genericNames: Set[String]): Constraint= in match {

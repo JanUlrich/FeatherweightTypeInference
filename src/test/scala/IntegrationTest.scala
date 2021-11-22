@@ -71,7 +71,6 @@ class IntegrationTest extends FunSuite {
   test("list.add") {
     val input = "class List<A extends Object> extends Object{\nA f;\n  add( a){\n  return new List(a);\n}\n}\nclass Test extends Object{\n\nm(a){return a.add(this);}\n}"
     val result = FJTypeinference.typeinference(input )
-    println(result.map(it => Main.prettyPrint(it._1)))
-
+    println(result.map(it => Main.prettyPrintAST(it._2)))
   }
 }
