@@ -284,7 +284,7 @@ object Unify {
   private def substHelper(a: UnifyTV, withType: UnifyType,in: UnifyType) :UnifyType = in match {
     case UnifyRefType(n, p) => UnifyRefType(n,p.map(t => substHelper(a, withType, t)))
     case UnifyTV(n) =>
-      if(a.equals(in)){withType}else{in}
+      if(a.name.equals(n)){withType}else{in}
   }
 
   def subst(a: UnifyTV, substType: UnifyType,eq: Set[UnifyConstraint]): Set[UnifyConstraint] = {

@@ -79,8 +79,8 @@ object Main {
       "class " + cl.name + prettyPrintGenericList(cl.genericParams.map(it => LessDot(it._1, it._2))) +
         " extends " + prettyPrintType(cl.superType) + "{\n" +
         cl.fields.map(f => {
-          prettyPrintType(f._1) + " " + f._2 + ";"
-        }).mkString("\n") +
+          "    " + prettyPrintType(f._1) + " " + f._2 + ";"
+        }).mkString("\n") + "\n" +
         cl.methods.map(m => {
           "    "+ prettyPrintGenericList(m.genericParams) + " " +
            prettyPrintType(m.retType) +" "+ m.name +"(" + m.params.map(tp=>prettyPrintType(tp._1) + " " + tp._2).mkString(", ") + ") {\n"+
