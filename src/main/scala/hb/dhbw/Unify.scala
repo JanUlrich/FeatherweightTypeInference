@@ -259,7 +259,7 @@ object Unify {
       case UnifyTV(a) => tv.equals(UnifyTV(a))
       case UnifyRefType(a,p) => paramsContain(tv, UnifyRefType(a,p))
     }).isDefined
-  def substStep(eq: Set[UnifyConstraint]) = {
+  def substStep(eq: Set[UnifyConstraint]): Step4Result = {
     def substCall(eq: Set[UnifyConstraint]) = eq.find(c => c match {
       case UnifyEqualsDot(UnifyTV(a), UnifyRefType(n, p)) => !paramsContain(UnifyTV(a), UnifyRefType(n,p))
       case UnifyEqualsDot(UnifyTV(a), UnifyTV(b)) => !a.equals(b)
