@@ -81,18 +81,26 @@ object InsertTypes {
   private def getLinkedConstraints(linkedTypes: Set[Type], in: Set[Constraint]): Set[Constraint] ={
     var typesWithoutBounds = linkedTypes
     in.flatMap(_ match {
-      case LessDot(GenericType(a), RefType(name, params)) => {
-        if(linkedTypes.contains(GenericType(a))){
-          typesWithoutBounds = typesWithoutBounds - GenericType(a)
+      case LessDot(TypeVariable(a), RefType(name, params)) => {
+        if(linkedTypes.contains(TypeVariable(a))){
+          typesWithoutBounds = typesWithoutBounds - TypeVariable(a)
           val genericsInParams = params.filter(_ match {
-            case GenericType(_) => true
+            case TypeVariable(_) => true
             case _ => false
           }).toSet
-          getLinkedConstraints(genericsInParams, in) +LessDot(GenericType(a), RefType(name, params))
+          getLinkedConstraints(genericsInParams, in) + LessDot(GenericType(a), RefType(name, params))
         }else{
           Set()
         }
       }
+      case LessDot(TypeVariable(a), GenericType(g)) => if(linkedTypes.contains(TypeVariable(a))){
+        typesWithoutBounds = typesWithoutBounds - TypeVariable(a)
+        Set(LessDot(GenericType(a), GenericType(g)))
+      }else Set()
+      case EqualsDot(TypeVariable(a), _) => if(linkedTypes.contains(TypeVariable(a))){
+        typesWithoutBounds = typesWithoutBounds - TypeVariable(a)
+        Set()
+      }else Set()
       case _ => Set()
     }) ++ typesWithoutBounds.map(t => LessDot(t, RefType("Object", List())))
   }
