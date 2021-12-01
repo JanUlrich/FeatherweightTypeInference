@@ -78,4 +78,23 @@ class IntegrationTest extends FunSuite {
     val result = FJTypeinference.typeinference(input )
     println(result.map(it => Main.prettyPrintAST(it._2)))
   }
+
+  test("functionClass") {
+    val input = "class SameType<A extends Object, B extends Object> extends Object{\nA a;\nA b;\nB c;\nget(){return this.c;}\n}\nclass Function<A extends Object, B extends Object> extends Object{\nA ret;\nB param;\napply(a){\nreturn new SameType(this.param, a, this).get().ret;\n}\n\n}"
+    val result = FJTypeinference.typeinference(input )
+    println(result.map(it => Main.prettyPrintAST(it._2)))
+  }
+    /*
+  Additional Tests:
+
+class Test extends Object{
+ m(a, b){return a;}
+m(a,b){return b;}
+}
+
+class Test2 extends Object{
+test(a){return new Test().m(this,a);}
+}
+
+   */
 }

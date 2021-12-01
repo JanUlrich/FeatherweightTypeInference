@@ -47,7 +47,7 @@ object Unify {
       val eqSet = it.get
       val rulesResult = applyRules(fc)(eqSet.flatten)
       val step2Result = step2(rulesResult, fc)
-      while(step2Result.hasNext() && results.isEmpty){
+      while(step2Result.hasNext()){
         val substResult = substStep(step2Result.nextProduct().flatten)
         substResult match{
           case UnchangedSet(eq) => if(isSolvedForm(eq)){
