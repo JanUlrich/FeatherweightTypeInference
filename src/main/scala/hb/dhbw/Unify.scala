@@ -271,6 +271,7 @@ object Unify {
     do{
       substResult = substCall(substResult._1)
       substResult._2.map(it => {
+        substVars = subst(it.left.asInstanceOf[UnifyTV], it.right, substVars)
         substVars = substVars + it
       })
     }while(substResult._2.isDefined)
