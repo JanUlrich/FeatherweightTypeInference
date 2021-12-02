@@ -34,6 +34,32 @@ object FJTypeinference {
   ).toSet)
   private def cToUnifyType(c: Class): UnifyRefType = UnifyRefType(c.name, c.genericParams.map(it => convertType(it._1)))
 
+  private def removeOverloadedSubtypeMethods(in: Class, finiteClosure: FiniteClosure) = {
+    def methodIsSupertype(m : Method, superMethod: Method) = {
+      def getBound(t: Type) = t match {
+        case GenericType(x) =>
+          (in.genericParams ++ m.genericParams.map(c => (c.asInstanceOf[LessDot].l, c.asInstanceOf[LessDot].r)))
+          .find(p => p._1.equals(GenericType(x))).map(_._2).get
+        case x => x
+      }
+      //finiteClosure.superTypes(getBound(m.retType))
+      false
+    }
+
+    val methodNames = in.methods.map(_.name)
+    val newMethods = methodNames.flatMap(mName => {
+      val overloadedMethods = in.methods.filter(_.name.equals(mName))
+      overloadedMethods.foldLeft(Set[Method]())((ms, m)=>{
+        if(ms.find(methodIsSupertype(_, m)).isDefined) { //If there is a method which is more general
+          ms //do not add this method
+        }else { //otherwise check if this method shadows another method
+          ms.filter(methodIsSupertype(m, _))
+        }
+      })
+    })
+    Class(in.name, in.genericParams, in.superType, in.fields, newMethods)
+  }
+
   def typeinference(str: String): Either[String, (Set[Set[UnifyConstraint]], List[Class])] = {
     val ast = Parser.parse(str).map(ASTBuilder.fromParseTree(_))
     var typedClasses: List[Class] = List()
@@ -50,6 +76,11 @@ object FJTypeinference {
         cOld :+ typeInsertedC
       })
       unifyResults
+    })
+    val fc = generateFC(typedClasses)
+    //typedClasses =
+    typedClasses.map(cl => {
+      removeOverloadedSubtypeMethods(cl, fc)
     })
     typeResult.map(it => (it.flatten, typedClasses))
   }
