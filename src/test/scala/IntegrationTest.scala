@@ -84,6 +84,19 @@ class IntegrationTest extends FunSuite {
     val result = FJTypeinference.typeinference(input )
     println(result.map(it => Main.prettyPrintAST(it._2)))
   }
+
+  test("TwoRecursiveMethods") {
+    val input = "class RecursiveMethods extends Object{\n\na1(x){ return this.a2(x);}\na2(y){ return this.a1(y);}}"
+    val result = FJTypeinference.typeinference(input)
+    println(result.map(it => Main.prettyPrintAST(it._2)))
+  }
+  /*
+class RecursiveMethods extends Object{
+
+a1(x){ return this.a2(x);}
+a2(y){ return this.a1(y);}
+}
+   */
     /*
   Additional Tests:
 
