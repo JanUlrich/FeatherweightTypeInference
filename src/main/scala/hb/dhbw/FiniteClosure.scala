@@ -20,8 +20,7 @@ class FiniteClosure(val extendsRelations : Set[(UnifyRefType, UnifyRefType)]){
   }
   private def transitiveTypes(of: Set[(UnifyRefType, UnifyRefType)]) ={
     val ref = Set.newBuilder[(UnifyRefType, UnifyRefType)]
-    ref ++= of.map(pair => (pair._1, pair._1))
-    ref ++= of.map(pair => (pair._2, pair._2))
+    ref ++= of.flatMap(pair => of.filter(p =>  p._1.eq(pair._2)))
     ref.result()
   }
   private def superClassTypes(of: UnifyRefType) = {
