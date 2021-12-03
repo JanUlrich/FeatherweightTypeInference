@@ -4,7 +4,7 @@ import fastparse._, fastparse.ScalaWhitespace._
 
 final case class ParserClass(name: String, params: List[(NType,NType)], superType: NType, fields: List[(NType,String)], methods: List[ParserMethod])
 
-final case class ParserMethod(name: String, params: List[String], retExpr: Expr)
+final case class ParserMethod(retType: Option[NType], name: String, params: List[(Option[NType], String)], retExpr: Expr)
 final case class NType(name: String, params: List[NType])
 
 object Parser {
@@ -37,9 +37,10 @@ object Parser {
   def classDefinition[_: P]: P[ParserClass] = P(kw("class") ~ ident ~ genericParamList.? ~ kw("extends") ~ typeParser ~ "{" ~ field.rep(0) ~ method.rep(0) ~ "}")
     .map(ite => ParserClass(ite._1, ite._2.getOrElse(List()),ite._3,  ite._4.toList, ite._5.toList))
   def field[_: P]: P[(NType, String)] = P(typeParser ~ ident ~ ";")
-  def method[_: P]: P[ParserMethod] = P(ident ~ (("("~")").map(it => List()) | ("(" ~ ident ~ ("," ~ ident).rep(0) ~ ")").map(ite => List(ite._1) ++ ite._2))
+  def parameterDef[_ : P]: P[(Option[NType], String)] = P(typeParser.? ~ ident)
+  def method[_: P]: P[ParserMethod] = P(typeParser.? ~ ident ~ (("("~")").map(it => List()) | ("(" ~ parameterDef ~ ("," ~ parameterDef).rep(0) ~ ")").map(ite => (ite._1, ite._2) +: ite._3.toList))
     ~ "{" ~ kw("return") ~ expr ~ ";" ~ "}")
-    .map(ite => ParserMethod(ite._1, ite._2, ite._3))
+    .map(ite => ParserMethod(ite._1, ite._2, ite._3, ite._4))
   def genericParamList[_: P]: P[List[(NType,NType)]] = P("<" ~ (typeParser ~ kw("extends") ~ typeParser) ~ ("," ~ (typeParser ~ kw("extends") ~ typeParser)).rep(0) ~ ">").map(ite => List((ite._1, ite._2)) ++ ite._3.map(ite3 => (ite3._1, ite3._2)))
   def typeParser[_: P]: P[NType] = P(ident ~ ("<" ~ typeParser ~ ("," ~ typeParser).rep(0) ~  ">").?)
     .map(ite => NType(ite._1, ite._2.map(ite => List(ite._1) ++ ite._2).getOrElse(List())))
