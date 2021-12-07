@@ -97,9 +97,13 @@ object InsertTypes {
         typesWithoutBounds = typesWithoutBounds - TypeVariable(a)
         Set(LessDot(GenericType(a), GenericType(g)))
       }else Set()
-      case EqualsDot(TypeVariable(a), _) => if(linkedTypes.contains(TypeVariable(a))){
+      case EqualsDot(TypeVariable(a), RefType(_,_)) => if(linkedTypes.contains(TypeVariable(a))){
         typesWithoutBounds = typesWithoutBounds - TypeVariable(a)
         Set()
+      }else Set()
+      case EqualsDot(TypeVariable(a), TypeVariable(b)) => if(linkedTypes.contains(TypeVariable(a))){
+        typesWithoutBounds = typesWithoutBounds - TypeVariable(a)
+        Set(LessDot(GenericType(b), RefType("Object", List())))
       }else Set()
       case _ => Set()
     }) ++ typesWithoutBounds.map(t => LessDot(t, RefType("Object", List())))
