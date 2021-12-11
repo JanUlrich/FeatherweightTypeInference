@@ -97,9 +97,13 @@ object InsertTypes {
         typesWithoutBounds = typesWithoutBounds - TypeVariable(a)
         Set(LessDot(GenericType(a), GenericType(g)))
       }else Set()
-      case EqualsDot(TypeVariable(a), RefType(_,_)) => if(linkedTypes.contains(TypeVariable(a))){
+      case EqualsDot(TypeVariable(a), RefType(_,params)) => if(linkedTypes.contains(TypeVariable(a))){
         typesWithoutBounds = typesWithoutBounds - TypeVariable(a)
-        Set()
+        val genericsInParams = params.filter(_ match {
+          case TypeVariable(_) => true
+          case _ => false
+        }).toSet
+        getLinkedConstraints(genericsInParams, in)
       }else Set()
       case EqualsDot(TypeVariable(a), TypeVariable(b)) => if(linkedTypes.contains(TypeVariable(a))){
         typesWithoutBounds = typesWithoutBounds - TypeVariable(a)
@@ -129,12 +133,12 @@ object InsertTypes {
     }
 
     val genericRetType = substType(into.retType)
-    val genericParams = into.params.map(p => (substType(p._1), p._2))
+    val substitutedParams = into.params.map(p => (substType(p._1), p._2))
     val tvsUsedInMethod = (Set(into.retType) ++ into.params.map(_._1)).flatMap(getAllTVs(_))
     val constraintsForMethod = getLinkedConstraints(tvsUsedInMethod, constraints)
     val mCons = (into.genericParams ++ constraintsForMethod).map(replaceTypeVarWithGeneric(_))
 
-    Method(mCons, genericRetType, into.name, genericParams, into.retExpr)
+    Method(mCons, genericRetType, into.name, substitutedParams, into.retExpr)
   }
 
   private def replaceTypeVarWithGeneric(in: Constraint): Constraint= in match {
