@@ -1,8 +1,9 @@
 package hb.dhbw
 
-sealed case class FJType()
-sealed case class FJNamedType(name: String, params: List[FJType]) extends FJType
-sealed case class FJTypeVariable(name: String) extends FJType
+sealed trait FJType
+case class FJNamedType(name: String, params: List[FJType]) extends FJType
+case class FJTypeVariable(name: String) extends FJType
+
 
 class FiniteClosure(val extendsRelations : Set[(FJNamedType, FJNamedType)]){
 
@@ -39,12 +40,9 @@ class FiniteClosure(val extendsRelations : Set[(FJNamedType, FJNamedType)]){
     sClass.result()
   }
 
-  private def convert(unifyType: UnifyType): FJType = unifyType match {
-    case UnifyRefType(n, p) => FJNamedType(n, p.map(convert(_)))
-    case UnifyTV(n) => FJTypeVariable(n)
-  }
+  def superTypes(of : FJNamedType) : Set[FJNamedType] = calculateSupertypes(of)
 
-  def superTypes(of : UnifyRefType) : Set[UnifyRefType] = calculateSupertypes(convert(of).asInstanceOf[FJNamedType])
+  def aIsSubtypeOfb(a: FJNamedType, b: FJNamedType): Boolean = calculateSupertypes(a).contains(b)
 
   def isPossibleSupertype(of: String, superType: String): Boolean = {
     val extendsMap = extendsRelations.map(p => (p._1.name,p._2.name)).toMap

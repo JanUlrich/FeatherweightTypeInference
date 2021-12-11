@@ -13,10 +13,17 @@ object FJTypeinference {
   private def convertOrConstraints(constraints: List[Constraint]): Set[Set[Set[UnifyConstraint]]] = constraints.map(
     convertOrCons
   ).toSet
-  def convertType(t: Type): UnifyType = t match {
+  private def convertType(t: Type): UnifyType = t match {
     case GenericType(name) => UnifyRefType(name, List())
     case RefType(n, p) => UnifyRefType(n,p.map(convertType))
     case TypeVariable(n) => UnifyTV(n)
+  }
+
+  private def convertRefType(unifyType: UnifyRefType): FJNamedType = FJNamedType(unifyType.name, unifyType.params.map(convert(_)))
+
+  private def convert(unifyType: UnifyType): FJType = unifyType match {
+    case UnifyRefType(n, p) => FJNamedType(n, p.map(convert(_)))
+    case UnifyTV(n) => FJTypeVariable(n)
   }
 
   private def convertSingleConstraint(constraint: Constraint) = constraint match {
@@ -31,10 +38,14 @@ object FJTypeinference {
       val classExtension: (UnifyRefType, UnifyRefType) = (cToUnifyType(c), convertType(c.superType).asInstanceOf[UnifyRefType])
       genericBounds + classExtension
     }
-  ).toSet)
+  ).map(it => (convertRefType(it._1), convertRefType(it._2))).toSet)
   private def cToUnifyType(c: Class): UnifyRefType = UnifyRefType(c.name, c.genericParams.map(it => convertType(it._1)))
 
   private def removeOverloadedSubtypeMethods(in: Class, finiteClosure: FiniteClosure) = {
+    def convertToFJType(in: Type): FJNamedType = in match {
+      case GenericType(name) => FJNamedType(name, List())
+      case RefType(n, p) => FJNamedType(n,p.map(convertToFJType))
+    }
     def methodIsSupertype(m : Method, superMethod: Method) = {
       def getBound(t: Type) = t match {
         case GenericType(x) =>
@@ -42,8 +53,7 @@ object FJTypeinference {
           .find(p => p._1.equals(GenericType(x))).map(_._2).get
         case x => x
       }
-      //finiteClosure.superTypes(getBound(m.retType))
-      false
+      finiteClosure.aIsSubtypeOfb(convertToFJType(getBound(m.retType)), convertToFJType(getBound(superMethod.retType)))
     }
 
     val methodNames = in.methods.map(_.name)

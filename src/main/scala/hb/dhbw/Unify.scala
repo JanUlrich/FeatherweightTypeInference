@@ -89,7 +89,7 @@ object Unify {
     })
     val cUnifyLessDotACons: Set[Set[Set[UnifyConstraint]]] = eq.map(c => c match{
       case UnifyLessDot(UnifyRefType(name,params), UnifyTV(a)) =>
-        fc.superTypes(UnifyRefType(name,params))
+        getSuperTypes(UnifyRefType(name,params), fc)
           .map(superType => Set(UnifyEqualsDot(UnifyTV(a), superType).asInstanceOf[UnifyConstraint]))
       case _ => null
     }).filter(s => s!=null)
@@ -115,7 +115,7 @@ object Unify {
     val aUnifyLessDotCCons =  aUnifyLessDotCConsAndBs.map{
       case (ac:UnifyLessDot,Some(b)) =>
         Set(Set(UnifyLessDot(b, ac.right))) ++
-          fc.superTypes(ac.right.asInstanceOf[UnifyRefType])
+          getSuperTypes(ac.right.asInstanceOf[UnifyRefType], fc)
             .map(superType => Set(UnifyEqualsDot(b, superType)))
       case (ac, None) => null
     }.filter(c => c != null).asInstanceOf[Set[Set[Set[UnifyConstraint]]]]
@@ -167,11 +167,22 @@ object Unify {
     case x => x
   })
 
+  private def convert(fjType: FJType): UnifyType = fjType match {
+    case FJNamedType(n, p) => UnifyRefType(n, p.map(convert))
+    case FJTypeVariable(n) => UnifyTV(n)
+  }
+  private def convertNamedType(fjType: FJNamedType): UnifyRefType = UnifyRefType(fjType.name, fjType.params.map(convert))
+  private def convertRefType(unifyType: UnifyRefType): FJNamedType = FJNamedType(unifyType.name, unifyType.params.map(convert(_)))
+  private def convert(unifyType: UnifyType): FJType = unifyType match {
+    case UnifyRefType(n, p) => FJNamedType(n, p.map(convert(_)))
+    case UnifyTV(n) => FJTypeVariable(n)
+  }
+  private def getSuperTypes(of: UnifyRefType, fc: FiniteClosure) = fc.superTypes(convertRefType(of)).map(convertNamedType)
   def adaptRule(eq: Set[UnifyConstraint], fc: FiniteClosure) = {
     eq.map(c => c match {
       case UnifyLessDot(UnifyRefType(an, ap), UnifyRefType(bn, bp)) => {
         if(fc.isPossibleSupertype(an, bn)){
-          UnifyEqualsDot(fc.superTypes(UnifyRefType(an, ap)).find(r => r.name.equals(bn)).get, UnifyRefType(bn, bp))
+          UnifyEqualsDot(getSuperTypes(UnifyRefType(an, ap), fc).find(r => r.name.equals(bn)).get, UnifyRefType(bn, bp))
         }else{
           UnifyLessDot(UnifyRefType(an, ap), UnifyRefType(bn, bp))
         }
