@@ -109,6 +109,10 @@ object InsertTypes {
         typesWithoutBounds = typesWithoutBounds - TypeVariable(a)
         Set(LessDot(GenericType(b), RefType("Object", List())))
       }else Set()
+      case EqualsDot(TypeVariable(a), GenericType(_)) => if(linkedTypes.contains(TypeVariable(a))){
+        typesWithoutBounds = typesWithoutBounds - TypeVariable(a)
+        Set()
+      }else Set()
       case _ => Set()
     }) ++ typesWithoutBounds.map(t => LessDot(t, RefType("Object", List())))
   }
