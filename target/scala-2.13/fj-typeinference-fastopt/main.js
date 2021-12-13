@@ -2191,6 +2191,18 @@ function $isArrayOf_Lhb_dhbw_Expr(obj, depth) {
 function $asArrayOf_Lhb_dhbw_Expr(obj, depth) {
   return (($isArrayOf_Lhb_dhbw_Expr(obj, depth) || (obj === null)) ? obj : $throwArrayCastException(obj, "Lhb.dhbw.Expr;", depth))
 }
+function $is_Lhb_dhbw_FJType(obj) {
+  return (!(!((obj && obj.$classData) && obj.$classData.ancestors.Lhb_dhbw_FJType)))
+}
+function $as_Lhb_dhbw_FJType(obj) {
+  return (($is_Lhb_dhbw_FJType(obj) || (obj === null)) ? obj : $throwClassCastException(obj, "hb.dhbw.FJType"))
+}
+function $isArrayOf_Lhb_dhbw_FJType(obj, depth) {
+  return (!(!(((obj && obj.$classData) && (obj.$classData.arrayDepth === depth)) && obj.$classData.arrayBase.ancestors.Lhb_dhbw_FJType)))
+}
+function $asArrayOf_Lhb_dhbw_FJType(obj, depth) {
+  return (($isArrayOf_Lhb_dhbw_FJType(obj, depth) || (obj === null)) ? obj : $throwArrayCastException(obj, "Lhb.dhbw.FJType;", depth))
+}
 function $p_Lhb_dhbw_FJTypeinference$__convertAndCons__Lhb_dhbw_Constraint__sci_Set($thiz, andCons) {
   if ((andCons instanceof $c_Lhb_dhbw_AndConstraint)) {
     var x2 = $as_Lhb_dhbw_AndConstraint(andCons);
@@ -2308,17 +2320,114 @@ function $p_Lhb_dhbw_FJTypeinference$__convertOrConstraints__sci_List__sci_Set($
   };
   return $m_sci_Set$().from__sc_IterableOnce__sci_Set(this$2)
 }
+function $p_Lhb_dhbw_FJTypeinference$__convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType($thiz, t) {
+  if ((t instanceof $c_Lhb_dhbw_GenericType)) {
+    var x2 = $as_Lhb_dhbw_GenericType(t);
+    var name = x2.Lhb_dhbw_GenericType__f_name;
+    return new $c_Lhb_dhbw_UnifyRefType(name, $m_sci_Nil$())
+  } else if ((t instanceof $c_Lhb_dhbw_RefType)) {
+    var x3 = $as_Lhb_dhbw_RefType(t);
+    var n = x3.Lhb_dhbw_RefType__f_name;
+    var p = x3.Lhb_dhbw_RefType__f_params;
+    var f = ((this$1) => ((t$2$2) => {
+      var t$2 = $as_Lhb_dhbw_Type(t$2$2);
+      return $p_Lhb_dhbw_FJTypeinference$__convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType($m_Lhb_dhbw_FJTypeinference$(), t$2)
+    }))($thiz);
+    if ((p === $m_sci_Nil$())) {
+      var $$x1 = $m_sci_Nil$()
+    } else {
+      var arg1 = p.head__O();
+      var h = new $c_sci_$colon$colon(f(arg1), $m_sci_Nil$());
+      var t$1 = h;
+      var rest = $as_sci_List(p.tail__O());
+      while ((rest !== $m_sci_Nil$())) {
+        var arg1$1 = rest.head__O();
+        var nx = new $c_sci_$colon$colon(f(arg1$1), $m_sci_Nil$());
+        t$1.sci_$colon$colon__f_next = nx;
+        t$1 = nx;
+        rest = $as_sci_List(rest.tail__O())
+      };
+      var $$x1 = h
+    };
+    return new $c_Lhb_dhbw_UnifyRefType(n, $$x1)
+  } else if ((t instanceof $c_Lhb_dhbw_TypeVariable)) {
+    var x4 = $as_Lhb_dhbw_TypeVariable(t);
+    var n$2 = x4.Lhb_dhbw_TypeVariable__f_name;
+    return new $c_Lhb_dhbw_UnifyTV(n$2)
+  } else {
+    throw new $c_s_MatchError(t)
+  }
+}
+function $p_Lhb_dhbw_FJTypeinference$__convertRefType__Lhb_dhbw_UnifyRefType__Lhb_dhbw_FJNamedType($thiz, unifyType) {
+  var $$x2 = unifyType.Lhb_dhbw_UnifyRefType__f_name;
+  var this$2 = unifyType.Lhb_dhbw_UnifyRefType__f_params;
+  var f = ((this$1) => ((x$1$2) => {
+    var x$1 = $as_Lhb_dhbw_UnifyType(x$1$2);
+    return $p_Lhb_dhbw_FJTypeinference$__convert__Lhb_dhbw_UnifyType__Lhb_dhbw_FJType($m_Lhb_dhbw_FJTypeinference$(), x$1)
+  }))($thiz);
+  if ((this$2 === $m_sci_Nil$())) {
+    var $$x1 = $m_sci_Nil$()
+  } else {
+    var arg1 = this$2.head__O();
+    var h = new $c_sci_$colon$colon(f(arg1), $m_sci_Nil$());
+    var t = h;
+    var rest = $as_sci_List(this$2.tail__O());
+    while ((rest !== $m_sci_Nil$())) {
+      var arg1$1 = rest.head__O();
+      var nx = new $c_sci_$colon$colon(f(arg1$1), $m_sci_Nil$());
+      t.sci_$colon$colon__f_next = nx;
+      t = nx;
+      rest = $as_sci_List(rest.tail__O())
+    };
+    var $$x1 = h
+  };
+  return new $c_Lhb_dhbw_FJNamedType($$x2, $$x1)
+}
+function $p_Lhb_dhbw_FJTypeinference$__convert__Lhb_dhbw_UnifyType__Lhb_dhbw_FJType($thiz, unifyType) {
+  if ((unifyType instanceof $c_Lhb_dhbw_UnifyRefType)) {
+    var x2 = $as_Lhb_dhbw_UnifyRefType(unifyType);
+    var n = x2.Lhb_dhbw_UnifyRefType__f_name;
+    var p = x2.Lhb_dhbw_UnifyRefType__f_params;
+    var f = ((this$1) => ((x$2$2) => {
+      var x$2 = $as_Lhb_dhbw_UnifyType(x$2$2);
+      return $p_Lhb_dhbw_FJTypeinference$__convert__Lhb_dhbw_UnifyType__Lhb_dhbw_FJType($m_Lhb_dhbw_FJTypeinference$(), x$2)
+    }))($thiz);
+    if ((p === $m_sci_Nil$())) {
+      var $$x1 = $m_sci_Nil$()
+    } else {
+      var arg1 = p.head__O();
+      var h = new $c_sci_$colon$colon(f(arg1), $m_sci_Nil$());
+      var t = h;
+      var rest = $as_sci_List(p.tail__O());
+      while ((rest !== $m_sci_Nil$())) {
+        var arg1$1 = rest.head__O();
+        var nx = new $c_sci_$colon$colon(f(arg1$1), $m_sci_Nil$());
+        t.sci_$colon$colon__f_next = nx;
+        t = nx;
+        rest = $as_sci_List(rest.tail__O())
+      };
+      var $$x1 = h
+    };
+    return new $c_Lhb_dhbw_FJNamedType(n, $$x1)
+  } else if ((unifyType instanceof $c_Lhb_dhbw_UnifyTV)) {
+    var x3 = $as_Lhb_dhbw_UnifyTV(unifyType);
+    var n$2 = x3.Lhb_dhbw_UnifyTV__f_name;
+    return new $c_Lhb_dhbw_FJTypeVariable(n$2)
+  } else {
+    throw new $c_s_MatchError(unifyType)
+  }
+}
 function $p_Lhb_dhbw_FJTypeinference$__convertSingleConstraint__Lhb_dhbw_Constraint__Lhb_dhbw_UnifyConstraint($thiz, constraint) {
   if ((constraint instanceof $c_Lhb_dhbw_LessDot)) {
     var x2 = $as_Lhb_dhbw_LessDot(constraint);
     var l = x2.Lhb_dhbw_LessDot__f_l;
     var r = x2.Lhb_dhbw_LessDot__f_r;
-    return new $c_Lhb_dhbw_UnifyLessDot($thiz.convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType(l), $thiz.convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType(r))
+    return new $c_Lhb_dhbw_UnifyLessDot($p_Lhb_dhbw_FJTypeinference$__convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType($thiz, l), $p_Lhb_dhbw_FJTypeinference$__convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType($thiz, r))
   } else if ((constraint instanceof $c_Lhb_dhbw_EqualsDot)) {
     var x3 = $as_Lhb_dhbw_EqualsDot(constraint);
     var l$2 = x3.Lhb_dhbw_EqualsDot__f_l;
     var r$2 = x3.Lhb_dhbw_EqualsDot__f_r;
-    return new $c_Lhb_dhbw_UnifyEqualsDot($thiz.convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType(l$2), $thiz.convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType(r$2))
+    return new $c_Lhb_dhbw_UnifyEqualsDot($p_Lhb_dhbw_FJTypeinference$__convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType($thiz, l$2), $p_Lhb_dhbw_FJTypeinference$__convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType($thiz, r$2))
   } else {
     throw $m_sjsr_package$().unwrapJavaScriptException__jl_Throwable__O($ct_jl_Exception__T__(new $c_jl_Exception(), "Error: M\u00f6glicherweise zu tiefe Verschachtelung von OrConstraints"))
   }
@@ -2333,7 +2442,7 @@ function $p_Lhb_dhbw_FJTypeinference$__generateFC__sci_List__Lhb_dhbw_FiniteClos
     var this$2 = c.Lhb_dhbw_Class__f_genericParams;
     var f = ((this$1) => ((gt$2) => {
       var gt = $as_T2(gt$2);
-      return new $c_T2($as_Lhb_dhbw_UnifyRefType($m_Lhb_dhbw_FJTypeinference$().convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType($as_Lhb_dhbw_Type(gt.T2__f__1))), $as_Lhb_dhbw_UnifyRefType($m_Lhb_dhbw_FJTypeinference$().convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType($as_Lhb_dhbw_Type(gt.T2__f__2))))
+      return new $c_T2($as_Lhb_dhbw_UnifyRefType($p_Lhb_dhbw_FJTypeinference$__convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType($m_Lhb_dhbw_FJTypeinference$(), $as_Lhb_dhbw_Type(gt.T2__f__1))), $as_Lhb_dhbw_UnifyRefType($p_Lhb_dhbw_FJTypeinference$__convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType($m_Lhb_dhbw_FJTypeinference$(), $as_Lhb_dhbw_Type(gt.T2__f__2))))
     }))($thiz);
     if ((this$2 === $m_sci_Nil$())) {
       var this$3 = $m_sci_Nil$()
@@ -2352,7 +2461,7 @@ function $p_Lhb_dhbw_FJTypeinference$__generateFC__sci_List__Lhb_dhbw_FiniteClos
       var this$3 = h$1
     };
     var genericBounds = $m_sci_Set$().from__sc_IterableOnce__sci_Set(this$3);
-    var classExtension = new $c_T2($p_Lhb_dhbw_FJTypeinference$__cToUnifyType__Lhb_dhbw_Class__Lhb_dhbw_UnifyRefType($m_Lhb_dhbw_FJTypeinference$(), c), $as_Lhb_dhbw_UnifyRefType($m_Lhb_dhbw_FJTypeinference$().convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType(c.Lhb_dhbw_Class__f_superType)));
+    var classExtension = new $c_T2($p_Lhb_dhbw_FJTypeinference$__cToUnifyType__Lhb_dhbw_Class__Lhb_dhbw_UnifyRefType($m_Lhb_dhbw_FJTypeinference$(), c), $as_Lhb_dhbw_UnifyRefType($p_Lhb_dhbw_FJTypeinference$__convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType($m_Lhb_dhbw_FJTypeinference$(), c.Lhb_dhbw_Class__f_superType)));
     var it = $as_sci_Set(genericBounds.incl__O__sci_SetOps(classExtension)).iterator__sc_Iterator();
     while (it.hasNext__Z()) {
       var nx$1 = new $c_sci_$colon$colon(it.next__O(), $m_sci_Nil$());
@@ -2366,14 +2475,34 @@ function $p_Lhb_dhbw_FJTypeinference$__generateFC__sci_List__Lhb_dhbw_FiniteClos
     rest = $as_sci_List(rest.tail__O())
   };
   var this$4 = ((h === null) ? $m_sci_Nil$() : h);
-  return new $c_Lhb_dhbw_FiniteClosure($m_sci_Set$().from__sc_IterableOnce__sci_Set(this$4))
+  var f$1 = ((this$2$1) => ((it$2) => {
+    var it$1 = $as_T2(it$2);
+    return new $c_T2($p_Lhb_dhbw_FJTypeinference$__convertRefType__Lhb_dhbw_UnifyRefType__Lhb_dhbw_FJNamedType($m_Lhb_dhbw_FJTypeinference$(), $as_Lhb_dhbw_UnifyRefType(it$1.T2__f__1)), $p_Lhb_dhbw_FJTypeinference$__convertRefType__Lhb_dhbw_UnifyRefType__Lhb_dhbw_FJNamedType($m_Lhb_dhbw_FJTypeinference$(), $as_Lhb_dhbw_UnifyRefType(it$1.T2__f__2)))
+  }))($thiz);
+  if ((this$4 === $m_sci_Nil$())) {
+    var this$5 = $m_sci_Nil$()
+  } else {
+    var arg1$3 = this$4.head__O();
+    var h$2 = new $c_sci_$colon$colon(f$1(arg1$3), $m_sci_Nil$());
+    var t$2 = h$2;
+    var rest$2 = $as_sci_List(this$4.tail__O());
+    while ((rest$2 !== $m_sci_Nil$())) {
+      var arg1$4 = rest$2.head__O();
+      var nx$2 = new $c_sci_$colon$colon(f$1(arg1$4), $m_sci_Nil$());
+      t$2.sci_$colon$colon__f_next = nx$2;
+      t$2 = nx$2;
+      rest$2 = $as_sci_List(rest$2.tail__O())
+    };
+    var this$5 = h$2
+  };
+  return new $c_Lhb_dhbw_FiniteClosure($m_sci_Set$().from__sc_IterableOnce__sci_Set(this$5))
 }
 function $p_Lhb_dhbw_FJTypeinference$__cToUnifyType__Lhb_dhbw_Class__Lhb_dhbw_UnifyRefType($thiz, c) {
   var $$x2 = c.Lhb_dhbw_Class__f_name;
   var this$2 = c.Lhb_dhbw_Class__f_genericParams;
   var f = ((this$1) => ((it$2) => {
     var it = $as_T2(it$2);
-    return $m_Lhb_dhbw_FJTypeinference$().convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType($as_Lhb_dhbw_Type(it.T2__f__1))
+    return $p_Lhb_dhbw_FJTypeinference$__convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType($m_Lhb_dhbw_FJTypeinference$(), $as_Lhb_dhbw_Type(it.T2__f__1))
   }))($thiz);
   if ((this$2 === $m_sci_Nil$())) {
     var $$x1 = $m_sci_Nil$()
@@ -2395,12 +2524,12 @@ function $p_Lhb_dhbw_FJTypeinference$__cToUnifyType__Lhb_dhbw_Class__Lhb_dhbw_Un
 }
 function $p_Lhb_dhbw_FJTypeinference$__removeOverloadedSubtypeMethods__Lhb_dhbw_Class__Lhb_dhbw_FiniteClosure__Lhb_dhbw_Class($thiz, in$1, finiteClosure) {
   var this$2 = in$1.Lhb_dhbw_Class__f_methods;
-  var f = ((this$1) => ((x$2$2) => {
-    var x$2 = $as_Lhb_dhbw_Method(x$2$2);
-    return x$2.Lhb_dhbw_Method__f_name
+  var f = ((this$1) => ((x$4$2) => {
+    var x$4 = $as_Lhb_dhbw_Method(x$4$2);
+    return x$4.Lhb_dhbw_Method__f_name
   }))($thiz);
   if ((this$2 === $m_sci_Nil$())) {
-    var methodNames = $m_sci_Nil$()
+    var this$3 = $m_sci_Nil$()
   } else {
     var arg1 = this$2.head__O();
     var h = new $c_sci_$colon$colon(f(arg1), $m_sci_Nil$());
@@ -2413,21 +2542,18 @@ function $p_Lhb_dhbw_FJTypeinference$__removeOverloadedSubtypeMethods__Lhb_dhbw_
       t = nx;
       rest = $as_sci_List(rest.tail__O())
     };
-    var methodNames = h
+    var this$3 = h
   };
-  var rest$1 = methodNames;
-  var h$1 = null;
-  var t$1 = null;
-  while ((rest$1 !== $m_sci_Nil$())) {
-    var arg1$2 = rest$1.head__O();
-    var mName = $as_T(arg1$2);
-    var this$5 = in$1.Lhb_dhbw_Class__f_methods;
-    var f$1 = ((this$3, mName$1) => ((x$3$2) => {
-      var x$3 = $as_Lhb_dhbw_Method(x$3$2);
-      var this$4 = x$3.Lhb_dhbw_Method__f_name;
-      return (this$4 === mName$1)
-    }))($thiz, mName);
-    var l = this$5;
+  var methodNames = $m_sci_Set$().from__sc_IterableOnce__sci_Set(this$3);
+  var newMethods = $as_sci_Set(methodNames.flatMap__F1__O(new $c_sjsr_AnonFunction1(((this$2$1, in$2, finiteClosure$1) => ((mName$2) => {
+    var mName = $as_T(mName$2);
+    var this$6 = in$2.Lhb_dhbw_Class__f_methods;
+    var f$1 = ((this$4, mName$1) => ((x$5$2) => {
+      var x$5 = $as_Lhb_dhbw_Method(x$5$2);
+      var this$5 = x$5.Lhb_dhbw_Method__f_name;
+      return (this$5 === mName$1)
+    }))(this$2$1, mName);
+    var l = this$6;
     block: {
       var result;
       while (true) {
@@ -2435,14 +2561,14 @@ function $p_Lhb_dhbw_FJTypeinference$__removeOverloadedSubtypeMethods__Lhb_dhbw_
           var result = $m_sci_Nil$();
           break
         } else {
-          var h$2 = l.head__O();
-          var t$2 = $as_sci_List(l.tail__O());
-          if (($uZ(f$1(h$2)) === false)) {
-            l = t$2;
+          var h$1 = l.head__O();
+          var t$1 = $as_sci_List(l.tail__O());
+          if (($uZ(f$1(h$1)) === false)) {
+            l = t$1;
             continue
           };
           var start = l;
-          var remaining = t$2;
+          var remaining = t$1;
           while (true) {
             if (remaining.isEmpty__Z()) {
               var result = start;
@@ -2490,44 +2616,148 @@ function $p_Lhb_dhbw_FJTypeinference$__removeOverloadedSubtypeMethods__Lhb_dhbw_
         }
       }
     };
-    var this$6 = $m_s_Predef$().s_Predef$__f_Set;
+    var this$7 = $m_s_Predef$().s_Predef$__f_Set;
     var elems = $m_sci_Nil$();
-    var z = this$6.from__sc_IterableOnce__sci_Set(elems);
+    var z = this$7.from__sc_IterableOnce__sci_Set(elems);
     var acc = z;
     var these = result;
     while ((!these.isEmpty__Z())) {
-      var arg1$3 = acc;
+      var arg1$2 = acc;
       var arg2 = these.head__O();
-      var ms = $as_sci_Set(arg1$3);
+      var ms = $as_sci_Set(arg1$2);
       var m = $as_Lhb_dhbw_Method(arg2);
-      var this$8 = ms.find__F1__s_Option(new $c_sjsr_AnonFunction1(((this$7, m$1) => ((x$4$2) => {
-        $as_Lhb_dhbw_Method(x$4$2);
-        return false
-      }))($thiz, m)));
-      if ((!this$8.isEmpty__Z())) {
+      var this$9 = ms.find__F1__s_Option(new $c_sjsr_AnonFunction1(((this$8, m$1, in$1$1, finiteClosure$1$1) => ((x$6$2) => {
+        var x$6 = $as_Lhb_dhbw_Method(x$6$2);
+        return $p_Lhb_dhbw_FJTypeinference$__methodIsSupertype$1__Lhb_dhbw_Method__Lhb_dhbw_Method__Lhb_dhbw_Class__Lhb_dhbw_FiniteClosure__Z(this$8, x$6, m$1, in$1$1, finiteClosure$1$1)
+      }))(this$2$1, m, in$2, finiteClosure$1)));
+      if ((!this$9.isEmpty__Z())) {
         acc = ms
       } else {
-        acc = $as_sci_Set(ms.filter__F1__O(new $c_sjsr_AnonFunction1(((this$2$1, m$2) => ((x$5$2) => {
-          $as_Lhb_dhbw_Method(x$5$2);
-          return false
-        }))($thiz, m))))
+        var this$10 = $as_sci_SetOps(ms.filter__F1__O(new $c_sjsr_AnonFunction1(((this$2$2, m$2, in$1$2, finiteClosure$1$2) => ((x$7$2) => {
+          var x$7 = $as_Lhb_dhbw_Method(x$7$2);
+          return $p_Lhb_dhbw_FJTypeinference$__methodIsSupertype$1__Lhb_dhbw_Method__Lhb_dhbw_Method__Lhb_dhbw_Class__Lhb_dhbw_FiniteClosure__Z(this$2$2, m$2, x$7, in$1$2, finiteClosure$1$2)
+        }))(this$2$1, m, in$2, finiteClosure$1))));
+        acc = $as_sci_Set(this$10.incl__O__sci_SetOps(m))
       };
       these = $as_sc_LinearSeq(these.tail__O())
     };
-    var it = $as_sci_Set(acc).iterator__sc_Iterator();
-    while (it.hasNext__Z()) {
-      var nx$1 = new $c_sci_$colon$colon(it.next__O(), $m_sci_Nil$());
-      if ((t$1 === null)) {
-        h$1 = nx$1
-      } else {
-        t$1.sci_$colon$colon__f_next = nx$1
+    return $as_sci_Set(acc)
+  }))($thiz, in$1, finiteClosure))));
+  return new $c_Lhb_dhbw_Class(in$1.Lhb_dhbw_Class__f_name, in$1.Lhb_dhbw_Class__f_genericParams, in$1.Lhb_dhbw_Class__f_superType, in$1.Lhb_dhbw_Class__f_fields, ($m_sci_List$(), $m_sci_Nil$().prependedAll__sc_IterableOnce__sci_List(newMethods)))
+}
+function $p_Lhb_dhbw_FJTypeinference$__convertToFJType$1__Lhb_dhbw_Type__Lhb_dhbw_FJNamedType($thiz, in$1) {
+  if ((in$1 instanceof $c_Lhb_dhbw_GenericType)) {
+    var x2 = $as_Lhb_dhbw_GenericType(in$1);
+    var name = x2.Lhb_dhbw_GenericType__f_name;
+    return new $c_Lhb_dhbw_FJNamedType(name, $m_sci_Nil$())
+  } else if ((in$1 instanceof $c_Lhb_dhbw_RefType)) {
+    var x3 = $as_Lhb_dhbw_RefType(in$1);
+    var n = x3.Lhb_dhbw_RefType__f_name;
+    var p = x3.Lhb_dhbw_RefType__f_params;
+    var f = ((this$1) => ((in$2$2) => {
+      var in$2 = $as_Lhb_dhbw_Type(in$2$2);
+      return $p_Lhb_dhbw_FJTypeinference$__convertToFJType$1__Lhb_dhbw_Type__Lhb_dhbw_FJNamedType(this$1, in$2)
+    }))($thiz);
+    if ((p === $m_sci_Nil$())) {
+      var $$x1 = $m_sci_Nil$()
+    } else {
+      var arg1 = p.head__O();
+      var h = new $c_sci_$colon$colon(f(arg1), $m_sci_Nil$());
+      var t = h;
+      var rest = $as_sci_List(p.tail__O());
+      while ((rest !== $m_sci_Nil$())) {
+        var arg1$1 = rest.head__O();
+        var nx = new $c_sci_$colon$colon(f(arg1$1), $m_sci_Nil$());
+        t.sci_$colon$colon__f_next = nx;
+        t = nx;
+        rest = $as_sci_List(rest.tail__O())
       };
-      t$1 = nx$1
+      var $$x1 = h
     };
-    rest$1 = $as_sci_List(rest$1.tail__O())
-  };
-  var newMethods = ((h$1 === null) ? $m_sci_Nil$() : h$1);
-  return new $c_Lhb_dhbw_Class(in$1.Lhb_dhbw_Class__f_name, in$1.Lhb_dhbw_Class__f_genericParams, in$1.Lhb_dhbw_Class__f_superType, in$1.Lhb_dhbw_Class__f_fields, newMethods)
+    return new $c_Lhb_dhbw_FJNamedType(n, $$x1)
+  } else {
+    throw new $c_s_MatchError(in$1)
+  }
+}
+function $p_Lhb_dhbw_FJTypeinference$__getBound$1__Lhb_dhbw_Type__Lhb_dhbw_Class__Lhb_dhbw_Method__Lhb_dhbw_Type($thiz, t, in$1, m$1) {
+  if ((t instanceof $c_Lhb_dhbw_GenericType)) {
+    var x2 = $as_Lhb_dhbw_GenericType(t);
+    var x = x2.Lhb_dhbw_GenericType__f_name;
+    var this$3 = in$1.Lhb_dhbw_Class__f_genericParams;
+    var this$2 = m$1.Lhb_dhbw_Method__f_genericParams;
+    var f = ((this$1) => ((c$2) => {
+      var c = $as_Lhb_dhbw_Constraint(c$2);
+      return new $c_T2($as_Lhb_dhbw_LessDot(c).Lhb_dhbw_LessDot__f_l, $as_Lhb_dhbw_LessDot(c).Lhb_dhbw_LessDot__f_r)
+    }))($thiz);
+    if ((this$2 === $m_sci_Nil$())) {
+      var suffix = $m_sci_Nil$()
+    } else {
+      var arg1 = this$2.head__O();
+      var h = new $c_sci_$colon$colon(f(arg1), $m_sci_Nil$());
+      var t$1 = h;
+      var rest = $as_sci_List(this$2.tail__O());
+      while ((rest !== $m_sci_Nil$())) {
+        var arg1$1 = rest.head__O();
+        var nx = new $c_sci_$colon$colon(f(arg1$1), $m_sci_Nil$());
+        t$1.sci_$colon$colon__f_next = nx;
+        t$1 = nx;
+        rest = $as_sci_List(rest.tail__O())
+      };
+      var suffix = h
+    };
+    var this$4 = this$3.appendedAll__sc_IterableOnce__sci_List(suffix);
+    _return: {
+      var these = this$4;
+      while ((!these.isEmpty__Z())) {
+        var arg1$2 = these.head__O();
+        var p = $as_T2(arg1$2);
+        if ($dp_equals__O__Z(p.T2__f__1, new $c_Lhb_dhbw_GenericType(x))) {
+          var this$5 = new $c_s_Some(these.head__O());
+          break _return
+        };
+        these = $as_sci_List(these.tail__O())
+      };
+      var this$5 = $m_s_None$()
+    };
+    if (this$5.isEmpty__Z()) {
+      var this$6 = $m_s_None$()
+    } else {
+      var arg1$3 = this$5.get__O();
+      var x$3 = $as_T2(arg1$3);
+      var this$6 = new $c_s_Some($as_Lhb_dhbw_Type(x$3.T2__f__2))
+    };
+    if (this$6.isEmpty__Z()) {
+      var $$x1 = $m_s_None$()
+    } else {
+      var arg1$4 = this$6.get__O();
+      var t$2 = $as_Lhb_dhbw_Type(arg1$4);
+      var $$x1 = new $c_s_Some($p_Lhb_dhbw_FJTypeinference$__getBound$1__Lhb_dhbw_Type__Lhb_dhbw_Class__Lhb_dhbw_Method__Lhb_dhbw_Type($thiz, t$2, in$1, m$1))
+    };
+    return $as_Lhb_dhbw_Type($$x1.get__O())
+  } else {
+    return t
+  }
+}
+function $p_Lhb_dhbw_FJTypeinference$__methodIsSupertype$1__Lhb_dhbw_Method__Lhb_dhbw_Method__Lhb_dhbw_Class__Lhb_dhbw_FiniteClosure__Z($thiz, m, superMethod, in$1, finiteClosure$1) {
+  var this$1 = m.Lhb_dhbw_Method__f_params;
+  var $$x1 = this$1.length__I();
+  var this$2 = superMethod.Lhb_dhbw_Method__f_params;
+  if (($$x1 === this$2.length__I())) {
+    var returnIsSub = finiteClosure$1.aIsSubtypeOfb__Lhb_dhbw_FJNamedType__Lhb_dhbw_FJNamedType__Z($p_Lhb_dhbw_FJTypeinference$__convertToFJType$1__Lhb_dhbw_Type__Lhb_dhbw_FJNamedType($thiz, $p_Lhb_dhbw_FJTypeinference$__getBound$1__Lhb_dhbw_Type__Lhb_dhbw_Class__Lhb_dhbw_Method__Lhb_dhbw_Type($thiz, m.Lhb_dhbw_Method__f_retType, in$1, m)), $p_Lhb_dhbw_FJTypeinference$__convertToFJType$1__Lhb_dhbw_Type__Lhb_dhbw_FJNamedType($thiz, $p_Lhb_dhbw_FJTypeinference$__getBound$1__Lhb_dhbw_Type__Lhb_dhbw_Class__Lhb_dhbw_Method__Lhb_dhbw_Type($thiz, superMethod.Lhb_dhbw_Method__f_retType, in$1, m)));
+    if (returnIsSub) {
+      var this$3 = m.Lhb_dhbw_Method__f_params;
+      var that = superMethod.Lhb_dhbw_Method__f_params;
+      return $uZ($as_sc_LinearSeqOps($f_sc_StrictOptimizedIterableOps__zip__sc_IterableOnce__O(this$3, that)).foldLeft__O__F2__O(true, new $c_sjsr_AnonFunction2(((this$4, finiteClosure$1$1, in$1$1, m$1) => ((isSub$2, m2$2) => {
+        var isSub = $uZ(isSub$2);
+        var m2 = $as_T2(m2$2);
+        return (isSub && finiteClosure$1$1.aIsSubtypeOfb__Lhb_dhbw_FJNamedType__Lhb_dhbw_FJNamedType__Z($p_Lhb_dhbw_FJTypeinference$__convertToFJType$1__Lhb_dhbw_Type__Lhb_dhbw_FJNamedType(this$4, $p_Lhb_dhbw_FJTypeinference$__getBound$1__Lhb_dhbw_Type__Lhb_dhbw_Class__Lhb_dhbw_Method__Lhb_dhbw_Type(this$4, $as_Lhb_dhbw_Type($as_T2(m2.T2__f__1).T2__f__1), in$1$1, m$1)), $p_Lhb_dhbw_FJTypeinference$__convertToFJType$1__Lhb_dhbw_Type__Lhb_dhbw_FJNamedType(this$4, $p_Lhb_dhbw_FJTypeinference$__getBound$1__Lhb_dhbw_Type__Lhb_dhbw_Class__Lhb_dhbw_Method__Lhb_dhbw_Type(this$4, $as_Lhb_dhbw_Type($as_T2(m2.T2__f__2).T2__f__1), in$1$1, m$1))))
+      }))($thiz, finiteClosure$1, in$1, m))))
+    } else {
+      return false
+    }
+  } else {
+    return false
+  }
 }
 /** @constructor */
 function $c_Lhb_dhbw_FJTypeinference$() {
@@ -2540,51 +2770,13 @@ function $h_Lhb_dhbw_FJTypeinference$() {
   /*<skip>*/
 }
 $h_Lhb_dhbw_FJTypeinference$.prototype = $c_Lhb_dhbw_FJTypeinference$.prototype;
-$c_Lhb_dhbw_FJTypeinference$.prototype.convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType = (function(t) {
-  if ((t instanceof $c_Lhb_dhbw_GenericType)) {
-    var x2 = $as_Lhb_dhbw_GenericType(t);
-    var name = x2.Lhb_dhbw_GenericType__f_name;
-    return new $c_Lhb_dhbw_UnifyRefType(name, $m_sci_Nil$())
-  } else if ((t instanceof $c_Lhb_dhbw_RefType)) {
-    var x3 = $as_Lhb_dhbw_RefType(t);
-    var n = x3.Lhb_dhbw_RefType__f_name;
-    var p = x3.Lhb_dhbw_RefType__f_params;
-    var f = ((this$1) => ((t$2$2) => {
-      var t$2 = $as_Lhb_dhbw_Type(t$2$2);
-      return $m_Lhb_dhbw_FJTypeinference$().convertType__Lhb_dhbw_Type__Lhb_dhbw_UnifyType(t$2)
-    }))(this);
-    if ((p === $m_sci_Nil$())) {
-      var $$x1 = $m_sci_Nil$()
-    } else {
-      var arg1 = p.head__O();
-      var h = new $c_sci_$colon$colon(f(arg1), $m_sci_Nil$());
-      var t$1 = h;
-      var rest = $as_sci_List(p.tail__O());
-      while ((rest !== $m_sci_Nil$())) {
-        var arg1$1 = rest.head__O();
-        var nx = new $c_sci_$colon$colon(f(arg1$1), $m_sci_Nil$());
-        t$1.sci_$colon$colon__f_next = nx;
-        t$1 = nx;
-        rest = $as_sci_List(rest.tail__O())
-      };
-      var $$x1 = h
-    };
-    return new $c_Lhb_dhbw_UnifyRefType(n, $$x1)
-  } else if ((t instanceof $c_Lhb_dhbw_TypeVariable)) {
-    var x4 = $as_Lhb_dhbw_TypeVariable(t);
-    var n$2 = x4.Lhb_dhbw_TypeVariable__f_name;
-    return new $c_Lhb_dhbw_UnifyTV(n$2)
-  } else {
-    throw new $c_s_MatchError(t)
-  }
-});
 $c_Lhb_dhbw_FJTypeinference$.prototype.typeinference__T__s_util_Either = (function(str) {
   var this$1 = $m_Lhb_dhbw_Parser$().parse__T__s_util_Either(str);
   if ((this$1 instanceof $c_s_util_Right)) {
     var x2 = $as_s_util_Right(this$1);
     var b = x2.s_util_Right__f_value;
-    var x$6 = $as_sci_List(b);
-    var ast = new $c_s_util_Right(new $c_Lhb_dhbw_ASTBuilder$ASTBuilderMonad().fromParseTree__sci_List__sci_List(x$6))
+    var x$8 = $as_sci_List(b);
+    var ast = new $c_s_util_Right(new $c_Lhb_dhbw_ASTBuilder$ASTBuilderMonad().fromParseTree__sci_List__sci_List(x$8))
   } else {
     var ast = this$1
   };
@@ -2631,7 +2823,7 @@ $c_Lhb_dhbw_FJTypeinference$.prototype.typeinference__T__s_util_Either = (functi
     return $p_Lhb_dhbw_FJTypeinference$__removeOverloadedSubtypeMethods__Lhb_dhbw_Class__Lhb_dhbw_FiniteClosure__Lhb_dhbw_Class($m_Lhb_dhbw_FJTypeinference$(), cl, fc$1)
   }))(this, fc);
   if ((this$9 === $m_sci_Nil$())) {
-    $m_sci_Nil$()
+    elem$1 = $m_sci_Nil$()
   } else {
     var arg1$1 = this$9.head__O();
     var h = new $c_sci_$colon$colon(f(arg1$1), $m_sci_Nil$());
@@ -2643,7 +2835,8 @@ $c_Lhb_dhbw_FJTypeinference$.prototype.typeinference__T__s_util_Either = (functi
       t.sci_$colon$colon__f_next = nx;
       t = nx;
       rest = $as_sci_List(rest.tail__O())
-    }
+    };
+    elem$1 = h
   };
   if ((typeResult$1 instanceof $c_s_util_Right)) {
     var x2$2 = $as_s_util_Right(typeResult$1);
@@ -2669,7 +2862,7 @@ function $m_Lhb_dhbw_FJTypeinference$() {
   };
   return $n_Lhb_dhbw_FJTypeinference$
 }
-function $p_Lhb_dhbw_FiniteClosure__calculateSupertypes__Lhb_dhbw_UnifyRefType__sci_Set($thiz, of) {
+function $p_Lhb_dhbw_FiniteClosure__calculateSupertypes__Lhb_dhbw_FJNamedType__sci_Set($thiz, of) {
   var this$4 = $m_s_Predef$().s_Predef$__f_Set;
   var array = [new $c_T2(of, of)];
   var elems = $ct_sjsr_WrappedVarArgs__sjs_js_Array__(new $c_sjsr_WrappedVarArgs(), array);
@@ -2692,7 +2885,7 @@ function $p_Lhb_dhbw_FiniteClosure__calculateSupertypes__Lhb_dhbw_UnifyRefType__
   };
   return $as_sci_Set(rel.map__F1__O(new $c_sjsr_AnonFunction1(((this$8) => ((x$1$2) => {
     var x$1 = $as_T2(x$1$2);
-    return $as_Lhb_dhbw_UnifyRefType(x$1.T2__f__2)
+    return $as_Lhb_dhbw_FJNamedType(x$1.T2__f__2)
   }))($thiz))))
 }
 function $p_Lhb_dhbw_FiniteClosure__reflexiveTypes__sci_Set__sci_Set($thiz, of) {
@@ -2721,21 +2914,21 @@ function $p_Lhb_dhbw_FiniteClosure__transitiveTypes__sci_Set__sci_Set($thiz, of)
   ref.addAll__sc_IterableOnce__sci_SetBuilderImpl(xs);
   return ref.result__sci_Set()
 }
-function $p_Lhb_dhbw_FiniteClosure__superClassTypes__Lhb_dhbw_UnifyRefType__sci_Set($thiz, of) {
+function $p_Lhb_dhbw_FiniteClosure__superClassTypes__Lhb_dhbw_FJNamedType__sci_Set($thiz, of) {
   var extendsRelation = $as_sci_Set($thiz.Lhb_dhbw_FiniteClosure__f_extendsRelations.filter__F1__O(new $c_sjsr_AnonFunction1(((this$1, of$1) => ((pair$2) => {
     var pair = $as_T2(pair$2);
-    var this$2 = $as_Lhb_dhbw_UnifyRefType(pair.T2__f__1).Lhb_dhbw_UnifyRefType__f_name;
-    var that = of$1.Lhb_dhbw_UnifyRefType__f_name;
+    var this$2 = $as_Lhb_dhbw_FJNamedType(pair.T2__f__1).Lhb_dhbw_FJNamedType__f_name;
+    var that = of$1.Lhb_dhbw_FJNamedType__f_name;
     return (this$2 === that)
   }))($thiz, of))));
   return $as_sci_Set(extendsRelation.map__F1__O(new $c_sjsr_AnonFunction1(((this$2$1, of$2) => ((p$2) => {
     var p = $as_T2(p$2);
-    var this$3 = $as_Lhb_dhbw_UnifyRefType(p.T2__f__1).Lhb_dhbw_UnifyRefType__f_params;
-    var that$1 = of$2.Lhb_dhbw_UnifyRefType__f_params;
+    var this$3 = $as_Lhb_dhbw_FJNamedType(p.T2__f__1).Lhb_dhbw_FJNamedType__f_params;
+    var that$1 = of$2.Lhb_dhbw_FJNamedType__f_params;
     var $$x1 = $as_sc_IterableOnceOps($f_sc_StrictOptimizedIterableOps__zip__sc_IterableOnce__O(this$3, that$1));
     var this$4 = $m_s_$less$colon$less$();
     var paramMap = $$x1.toMap__s_$less$colon$less__sci_Map(this$4.s_$less$colon$less$__f_singleton);
-    return new $c_T2(of$2, new $c_Lhb_dhbw_UnifyRefType($as_Lhb_dhbw_UnifyRefType(p.T2__f__2).Lhb_dhbw_UnifyRefType__f_name, $as_Lhb_dhbw_UnifyRefType(p.T2__f__2).Lhb_dhbw_UnifyRefType__f_params.map__F1__sci_List(paramMap)))
+    return new $c_T2(of$2, new $c_Lhb_dhbw_FJNamedType($as_Lhb_dhbw_FJNamedType(p.T2__f__2).Lhb_dhbw_FJNamedType__f_name, $as_Lhb_dhbw_FJNamedType(p.T2__f__2).Lhb_dhbw_FJNamedType__f_params.map__F1__sci_List(paramMap)))
   }))($thiz, of))))
 }
 function $p_Lhb_dhbw_FiniteClosure__superClassTypes__sci_Set__sci_Set($thiz, of) {
@@ -2743,12 +2936,12 @@ function $p_Lhb_dhbw_FiniteClosure__superClassTypes__sci_Set__sci_Set($thiz, of)
   var xs = $as_sc_IterableOnce($as_sc_IterableOps(of.flatMap__F1__O(new $c_sjsr_AnonFunction1(((this$2) => ((pair$2) => {
     var pair = $as_T2(pair$2);
     var this$6 = $m_s_Predef$().s_Predef$__f_Set;
-    var array = [$as_Lhb_dhbw_UnifyRefType(pair.T2__f__2), $as_Lhb_dhbw_UnifyRefType(pair.T2__f__1)];
+    var array = [$as_Lhb_dhbw_FJNamedType(pair.T2__f__2), $as_Lhb_dhbw_FJNamedType(pair.T2__f__1)];
     var elems = $ct_sjsr_WrappedVarArgs__sjs_js_Array__(new $c_sjsr_WrappedVarArgs(), array);
     return this$6.from__sc_IterableOnce__sci_Set(elems)
   }))($thiz)))).flatMap__F1__O(new $c_sjsr_AnonFunction1(((this$2$1) => ((t$2) => {
-    var t = $as_Lhb_dhbw_UnifyRefType(t$2);
-    return $p_Lhb_dhbw_FiniteClosure__superClassTypes__Lhb_dhbw_UnifyRefType__sci_Set(this$2$1, t)
+    var t = $as_Lhb_dhbw_FJNamedType(t$2);
+    return $p_Lhb_dhbw_FiniteClosure__superClassTypes__Lhb_dhbw_FJNamedType__sci_Set(this$2$1, t)
   }))($thiz))));
   sClass.addAll__sc_IterableOnce__sci_SetBuilderImpl(xs);
   return sClass.result__sci_Set()
@@ -2765,10 +2958,13 @@ function $h_Lhb_dhbw_FiniteClosure() {
   /*<skip>*/
 }
 $h_Lhb_dhbw_FiniteClosure.prototype = $c_Lhb_dhbw_FiniteClosure.prototype;
+$c_Lhb_dhbw_FiniteClosure.prototype.aIsSubtypeOfb__Lhb_dhbw_FJNamedType__Lhb_dhbw_FJNamedType__Z = (function(a, b) {
+  return $p_Lhb_dhbw_FiniteClosure__calculateSupertypes__Lhb_dhbw_FJNamedType__sci_Set(this, a).contains__O__Z(b)
+});
 $c_Lhb_dhbw_FiniteClosure.prototype.isPossibleSupertype__T__T__Z = (function(of, superType) {
   var $$x1 = $as_sc_IterableOnceOps(this.Lhb_dhbw_FiniteClosure__f_extendsRelations.map__F1__O(new $c_sjsr_AnonFunction1(((this$1) => ((p$2) => {
     var p = $as_T2(p$2);
-    return new $c_T2($as_Lhb_dhbw_UnifyRefType(p.T2__f__1).Lhb_dhbw_UnifyRefType__f_name, $as_Lhb_dhbw_UnifyRefType(p.T2__f__2).Lhb_dhbw_UnifyRefType__f_name)
+    return new $c_T2($as_Lhb_dhbw_FJNamedType(p.T2__f__1).Lhb_dhbw_FJNamedType__f_name, $as_Lhb_dhbw_FJNamedType(p.T2__f__2).Lhb_dhbw_FJNamedType__f_name)
   }))(this))));
   var this$2 = $m_s_$less$colon$less$();
   var extendsMap = $$x1.toMap__s_$less$colon$less__sci_Map(this$2.s_$less$colon$less$__f_singleton);
@@ -2842,12 +3038,14 @@ function $p_Lhb_dhbw_InsertTypes$__flatten__sci_Set__sci_Set($thiz, eq) {
 }
 function $p_Lhb_dhbw_InsertTypes$__getLinkedConstraints__sci_Set__sci_Set__sci_Set($thiz, linkedTypes, in$1) {
   var typesWithoutBounds = new $c_sr_ObjectRef(linkedTypes);
-  var this$17 = $as_sc_SetOps(in$1.flatMap__F1__O(new $c_sjsr_AnonFunction1(((this$2, linkedTypes$1, typesWithoutBounds$1, in$2) => ((x$9$2) => {
+  var this$25 = $as_sc_SetOps(in$1.flatMap__F1__O(new $c_sjsr_AnonFunction1(((this$2, linkedTypes$1, typesWithoutBounds$1, in$2) => ((x$9$2) => {
     var x$9 = $as_Lhb_dhbw_Constraint(x$9$2);
-    var rc17 = false;
+    var rc30 = false;
     var x2 = null;
+    var rc31 = false;
+    var x12 = null;
     if ((x$9 instanceof $c_Lhb_dhbw_LessDot)) {
-      rc17 = true;
+      rc30 = true;
       x2 = $as_Lhb_dhbw_LessDot(x$9);
       var p3 = x2.Lhb_dhbw_LessDot__f_l;
       var p4 = x2.Lhb_dhbw_LessDot__f_r;
@@ -2941,7 +3139,7 @@ function $p_Lhb_dhbw_InsertTypes$__getLinkedConstraints__sci_Set__sci_Set__sci_S
         }
       }
     };
-    if (rc17) {
+    if (rc30) {
       var p8 = x2.Lhb_dhbw_LessDot__f_l;
       var p9 = x2.Lhb_dhbw_LessDot__f_r;
       if ((p8 instanceof $c_Lhb_dhbw_TypeVariable)) {
@@ -2967,34 +3165,153 @@ function $p_Lhb_dhbw_InsertTypes$__getLinkedConstraints__sci_Set__sci_Set__sci_S
       }
     };
     if ((x$9 instanceof $c_Lhb_dhbw_EqualsDot)) {
-      var x12 = $as_Lhb_dhbw_EqualsDot(x$9);
+      rc31 = true;
+      x12 = $as_Lhb_dhbw_EqualsDot(x$9);
       var p13 = x12.Lhb_dhbw_EqualsDot__f_l;
+      var p14 = x12.Lhb_dhbw_EqualsDot__f_r;
       if ((p13 instanceof $c_Lhb_dhbw_TypeVariable)) {
         var x15 = $as_Lhb_dhbw_TypeVariable(p13);
         var a$3 = x15.Lhb_dhbw_TypeVariable__f_name;
-        if (linkedTypes$1.contains__O__Z(new $c_Lhb_dhbw_TypeVariable(a$3))) {
-          var this$13 = $as_sci_Set(typesWithoutBounds$1.sr_ObjectRef__f_elem);
-          var elem$3 = new $c_Lhb_dhbw_TypeVariable(a$3);
-          typesWithoutBounds$1.sr_ObjectRef__f_elem = $as_sci_Set(this$13.excl__O__sci_SetOps(elem$3));
-          var this$14 = $m_s_Predef$().s_Predef$__f_Set;
-          var elems$3 = $m_sci_Nil$();
-          return this$14.from__sc_IterableOnce__sci_Set(elems$3)
-        } else {
-          var this$15 = $m_s_Predef$().s_Predef$__f_Set;
-          var elems$4 = $m_sci_Nil$();
-          return this$15.from__sc_IterableOnce__sci_Set(elems$4)
+        if ((p14 instanceof $c_Lhb_dhbw_RefType)) {
+          var x16 = $as_Lhb_dhbw_RefType(p14);
+          var params$2 = x16.Lhb_dhbw_RefType__f_params;
+          if (linkedTypes$1.contains__O__Z(new $c_Lhb_dhbw_TypeVariable(a$3))) {
+            var this$13 = $as_sci_Set(typesWithoutBounds$1.sr_ObjectRef__f_elem);
+            var elem$3 = new $c_Lhb_dhbw_TypeVariable(a$3);
+            typesWithoutBounds$1.sr_ObjectRef__f_elem = $as_sci_Set(this$13.excl__O__sci_SetOps(elem$3));
+            var f$1 = ((this$2$1) => ((x$11$2) => {
+              var x$11 = $as_Lhb_dhbw_Type(x$11$2);
+              return (x$11 instanceof $c_Lhb_dhbw_TypeVariable)
+            }))(this$2);
+            var l$1 = params$2;
+            block$2: {
+              var result$1;
+              while (true) {
+                if (l$1.isEmpty__Z()) {
+                  var result$1 = $m_sci_Nil$();
+                  break
+                } else {
+                  var h$1 = l$1.head__O();
+                  var t$1 = $as_sci_List(l$1.tail__O());
+                  if (($uZ(f$1(h$1)) === false)) {
+                    l$1 = t$1;
+                    continue
+                  };
+                  var start$1 = l$1;
+                  var remaining$1 = t$1;
+                  while (true) {
+                    if (remaining$1.isEmpty__Z()) {
+                      var result$1 = start$1;
+                      break block$2
+                    } else {
+                      var x$1 = remaining$1.head__O();
+                      if (($uZ(f$1(x$1)) !== false)) {
+                        remaining$1 = $as_sci_List(remaining$1.tail__O());
+                        continue
+                      };
+                      var firstMiss$1 = remaining$1;
+                      var newHead$1 = new $c_sci_$colon$colon(start$1.head__O(), $m_sci_Nil$());
+                      var toProcess$1 = $as_sci_List(start$1.tail__O());
+                      var currentLast$1 = newHead$1;
+                      while ((toProcess$1 !== firstMiss$1)) {
+                        var newElem$1 = new $c_sci_$colon$colon(toProcess$1.head__O(), $m_sci_Nil$());
+                        currentLast$1.sci_$colon$colon__f_next = newElem$1;
+                        currentLast$1 = newElem$1;
+                        toProcess$1 = $as_sci_List(toProcess$1.tail__O())
+                      };
+                      var next$1 = $as_sci_List(firstMiss$1.tail__O());
+                      var nextToCopy$1 = next$1;
+                      while ((!next$1.isEmpty__Z())) {
+                        var head$1 = next$1.head__O();
+                        if (($uZ(f$1(head$1)) !== false)) {
+                          next$1 = $as_sci_List(next$1.tail__O())
+                        } else {
+                          while ((nextToCopy$1 !== next$1)) {
+                            var newElem$2$1 = new $c_sci_$colon$colon(nextToCopy$1.head__O(), $m_sci_Nil$());
+                            currentLast$1.sci_$colon$colon__f_next = newElem$2$1;
+                            currentLast$1 = newElem$2$1;
+                            nextToCopy$1 = $as_sci_List(nextToCopy$1.tail__O())
+                          };
+                          nextToCopy$1 = $as_sci_List(next$1.tail__O());
+                          next$1 = $as_sci_List(next$1.tail__O())
+                        }
+                      };
+                      if ((!nextToCopy$1.isEmpty__Z())) {
+                        currentLast$1.sci_$colon$colon__f_next = nextToCopy$1
+                      };
+                      var result$1 = newHead$1;
+                      break block$2
+                    }
+                  }
+                }
+              }
+            };
+            var genericsInParams$2 = $m_sci_Set$().from__sc_IterableOnce__sci_Set(result$1);
+            return $p_Lhb_dhbw_InsertTypes$__getLinkedConstraints__sci_Set__sci_Set__sci_Set($m_Lhb_dhbw_InsertTypes$(), genericsInParams$2, in$2)
+          } else {
+            var this$14 = $m_s_Predef$().s_Predef$__f_Set;
+            var elems$3 = $m_sci_Nil$();
+            return this$14.from__sc_IterableOnce__sci_Set(elems$3)
+          }
         }
       }
     };
-    var this$16 = $m_s_Predef$().s_Predef$__f_Set;
-    var elems$5 = $m_sci_Nil$();
-    return this$16.from__sc_IterableOnce__sci_Set(elems$5)
+    if (rc31) {
+      var p19 = x12.Lhb_dhbw_EqualsDot__f_l;
+      var p20 = x12.Lhb_dhbw_EqualsDot__f_r;
+      if ((p19 instanceof $c_Lhb_dhbw_TypeVariable)) {
+        var x21 = $as_Lhb_dhbw_TypeVariable(p19);
+        var a$4 = x21.Lhb_dhbw_TypeVariable__f_name;
+        if ((p20 instanceof $c_Lhb_dhbw_TypeVariable)) {
+          var x22 = $as_Lhb_dhbw_TypeVariable(p20);
+          var b = x22.Lhb_dhbw_TypeVariable__f_name;
+          if (linkedTypes$1.contains__O__Z(new $c_Lhb_dhbw_TypeVariable(a$4))) {
+            var this$15 = $as_sci_Set(typesWithoutBounds$1.sr_ObjectRef__f_elem);
+            var elem$4 = new $c_Lhb_dhbw_TypeVariable(a$4);
+            typesWithoutBounds$1.sr_ObjectRef__f_elem = $as_sci_Set(this$15.excl__O__sci_SetOps(elem$4));
+            var this$19 = $m_s_Predef$().s_Predef$__f_Set;
+            var array$1 = [new $c_Lhb_dhbw_LessDot(new $c_Lhb_dhbw_GenericType(b), new $c_Lhb_dhbw_RefType("Object", $m_sci_Nil$()))];
+            var elems$4 = $ct_sjsr_WrappedVarArgs__sjs_js_Array__(new $c_sjsr_WrappedVarArgs(), array$1);
+            return this$19.from__sc_IterableOnce__sci_Set(elems$4)
+          } else {
+            var this$20 = $m_s_Predef$().s_Predef$__f_Set;
+            var elems$5 = $m_sci_Nil$();
+            return this$20.from__sc_IterableOnce__sci_Set(elems$5)
+          }
+        }
+      }
+    };
+    if (rc31) {
+      var p24 = x12.Lhb_dhbw_EqualsDot__f_l;
+      var p25 = x12.Lhb_dhbw_EqualsDot__f_r;
+      if ((p24 instanceof $c_Lhb_dhbw_TypeVariable)) {
+        var x26 = $as_Lhb_dhbw_TypeVariable(p24);
+        var a$5 = x26.Lhb_dhbw_TypeVariable__f_name;
+        if ((p25 instanceof $c_Lhb_dhbw_GenericType)) {
+          if (linkedTypes$1.contains__O__Z(new $c_Lhb_dhbw_TypeVariable(a$5))) {
+            var this$21 = $as_sci_Set(typesWithoutBounds$1.sr_ObjectRef__f_elem);
+            var elem$5 = new $c_Lhb_dhbw_TypeVariable(a$5);
+            typesWithoutBounds$1.sr_ObjectRef__f_elem = $as_sci_Set(this$21.excl__O__sci_SetOps(elem$5));
+            var this$22 = $m_s_Predef$().s_Predef$__f_Set;
+            var elems$6 = $m_sci_Nil$();
+            return this$22.from__sc_IterableOnce__sci_Set(elems$6)
+          } else {
+            var this$23 = $m_s_Predef$().s_Predef$__f_Set;
+            var elems$7 = $m_sci_Nil$();
+            return this$23.from__sc_IterableOnce__sci_Set(elems$7)
+          }
+        }
+      }
+    };
+    var this$24 = $m_s_Predef$().s_Predef$__f_Set;
+    var elems$8 = $m_sci_Nil$();
+    return this$24.from__sc_IterableOnce__sci_Set(elems$8)
   }))($thiz, linkedTypes, typesWithoutBounds, in$1))));
-  var that = $as_sc_IterableOnce($as_sci_Set(typesWithoutBounds.sr_ObjectRef__f_elem).map__F1__O(new $c_sjsr_AnonFunction1(((this$2$1) => ((t$2) => {
-    var t$1 = $as_Lhb_dhbw_Type(t$2);
-    return new $c_Lhb_dhbw_LessDot(t$1, new $c_Lhb_dhbw_RefType("Object", $m_sci_Nil$()))
+  var that = $as_sc_IterableOnce($as_sci_Set(typesWithoutBounds.sr_ObjectRef__f_elem).map__F1__O(new $c_sjsr_AnonFunction1(((this$2$2) => ((t$2) => {
+    var t$3 = $as_Lhb_dhbw_Type(t$2);
+    return new $c_Lhb_dhbw_LessDot(t$3, new $c_Lhb_dhbw_RefType("Object", $m_sci_Nil$()))
   }))($thiz))));
-  return $as_sci_Set(this$17.concat__sc_IterableOnce__sc_SetOps(that))
+  return $as_sci_Set(this$25.concat__sc_IterableOnce__sc_SetOps(that))
 }
 function $p_Lhb_dhbw_InsertTypes$__insert__sci_Set__Lhb_dhbw_Method__Lhb_dhbw_Method($thiz, constraints, into) {
   var genericRetType = $p_Lhb_dhbw_InsertTypes$__substType$2__Lhb_dhbw_Type__sci_Set__Lhb_dhbw_Type($thiz, into.Lhb_dhbw_Method__f_retType, constraints);
@@ -3004,7 +3321,7 @@ function $p_Lhb_dhbw_InsertTypes$__insert__sci_Set__Lhb_dhbw_Method__Lhb_dhbw_Me
     return new $c_T2($p_Lhb_dhbw_InsertTypes$__substType$2__Lhb_dhbw_Type__sci_Set__Lhb_dhbw_Type(this$1, $as_Lhb_dhbw_Type(p.T2__f__1), constraints$1), p.T2__f__2)
   }))($thiz, constraints);
   if ((this$2 === $m_sci_Nil$())) {
-    var genericParams = $m_sci_Nil$()
+    var substitutedParams = $m_sci_Nil$()
   } else {
     var arg1 = this$2.head__O();
     var h = new $c_sci_$colon$colon(f(arg1), $m_sci_Nil$());
@@ -3017,16 +3334,16 @@ function $p_Lhb_dhbw_InsertTypes$__insert__sci_Set__Lhb_dhbw_Method__Lhb_dhbw_Me
       t = nx;
       rest = $as_sci_List(rest.tail__O())
     };
-    var genericParams = h
+    var substitutedParams = h
   };
   var this$6 = $m_s_Predef$().s_Predef$__f_Set;
   var array = [into.Lhb_dhbw_Method__f_retType];
   var elems = $ct_sjsr_WrappedVarArgs__sjs_js_Array__(new $c_sjsr_WrappedVarArgs(), array);
   var this$8 = this$6.from__sc_IterableOnce__sci_Set(elems);
   var this$7 = into.Lhb_dhbw_Method__f_params;
-  var f$1 = ((this$2$1) => ((x$16$2) => {
-    var x$16 = $as_T2(x$16$2);
-    return $as_Lhb_dhbw_Type(x$16.T2__f__1)
+  var f$1 = ((this$2$1) => ((x$17$2) => {
+    var x$17 = $as_T2(x$17$2);
+    return $as_Lhb_dhbw_Type(x$17.T2__f__1)
   }))($thiz);
   if ((this$7 === $m_sci_Nil$())) {
     var that = $m_sci_Nil$()
@@ -3044,16 +3361,16 @@ function $p_Lhb_dhbw_InsertTypes$__insert__sci_Set__Lhb_dhbw_Method__Lhb_dhbw_Me
     };
     var that = h$1
   };
-  var tvsUsedInMethod = $as_sci_Set(this$8.concat__sc_IterableOnce__sc_SetOps(that).flatMap__F1__O(new $c_sjsr_AnonFunction1(((this$3$1) => ((x$17$2) => {
-    var x$17 = $as_Lhb_dhbw_Type(x$17$2);
-    return $p_Lhb_dhbw_InsertTypes$__getAllTVs$1__Lhb_dhbw_Type__sci_Set(this$3$1, x$17)
+  var tvsUsedInMethod = $as_sci_Set(this$8.concat__sc_IterableOnce__sc_SetOps(that).flatMap__F1__O(new $c_sjsr_AnonFunction1(((this$3$1) => ((x$18$2) => {
+    var x$18 = $as_Lhb_dhbw_Type(x$18$2);
+    return $p_Lhb_dhbw_InsertTypes$__getAllTVs$1__Lhb_dhbw_Type__sci_Set(this$3$1, x$18)
   }))($thiz))));
   var constraintsForMethod = $p_Lhb_dhbw_InsertTypes$__getLinkedConstraints__sci_Set__sci_Set__sci_Set($thiz, tvsUsedInMethod, constraints);
   var this$9 = into.Lhb_dhbw_Method__f_genericParams;
   var this$10 = this$9.appendedAll__sc_IterableOnce__sci_List(constraintsForMethod);
-  var f$2 = ((this$4$1) => ((x$18$2) => {
-    var x$18 = $as_Lhb_dhbw_Constraint(x$18$2);
-    return $p_Lhb_dhbw_InsertTypes$__replaceTypeVarWithGeneric__Lhb_dhbw_Constraint__Lhb_dhbw_Constraint($m_Lhb_dhbw_InsertTypes$(), x$18)
+  var f$2 = ((this$4$1) => ((x$19$2) => {
+    var x$19 = $as_Lhb_dhbw_Constraint(x$19$2);
+    return $p_Lhb_dhbw_InsertTypes$__replaceTypeVarWithGeneric__Lhb_dhbw_Constraint__Lhb_dhbw_Constraint($m_Lhb_dhbw_InsertTypes$(), x$19)
   }))($thiz);
   if ((this$10 === $m_sci_Nil$())) {
     var mCons = $m_sci_Nil$()
@@ -3071,7 +3388,7 @@ function $p_Lhb_dhbw_InsertTypes$__insert__sci_Set__Lhb_dhbw_Method__Lhb_dhbw_Me
     };
     var mCons = h$2
   };
-  return new $c_Lhb_dhbw_Method(mCons, genericRetType, into.Lhb_dhbw_Method__f_name, genericParams, into.Lhb_dhbw_Method__f_retExpr)
+  return new $c_Lhb_dhbw_Method(mCons, genericRetType, into.Lhb_dhbw_Method__f_name, substitutedParams, into.Lhb_dhbw_Method__f_retExpr)
 }
 function $p_Lhb_dhbw_InsertTypes$__replaceTypeVarWithGeneric__Lhb_dhbw_Constraint__Lhb_dhbw_Constraint($thiz, in$1) {
   if ((in$1 instanceof $c_Lhb_dhbw_LessDot)) {
@@ -3218,9 +3535,9 @@ function $p_Lhb_dhbw_InsertTypes$__replaceTVWithGeneric$1__Lhb_dhbw_Type__Lhb_dh
     var x3 = $as_Lhb_dhbw_RefType(in$1);
     var name$2 = x3.Lhb_dhbw_RefType__f_name;
     var params = x3.Lhb_dhbw_RefType__f_params;
-    var f = ((this$1) => ((x$11$2) => {
-      var x$11 = $as_Lhb_dhbw_Type(x$11$2);
-      return $p_Lhb_dhbw_InsertTypes$__replaceTVWithGeneric$1__Lhb_dhbw_Type__Lhb_dhbw_Type(this$1, x$11)
+    var f = ((this$1) => ((x$12$2) => {
+      var x$12 = $as_Lhb_dhbw_Type(x$12$2);
+      return $p_Lhb_dhbw_InsertTypes$__replaceTVWithGeneric$1__Lhb_dhbw_Type__Lhb_dhbw_Type(this$1, x$12)
     }))($thiz);
     if ((params === $m_sci_Nil$())) {
       var $$x1 = $m_sci_Nil$()
@@ -3248,26 +3565,26 @@ function $p_Lhb_dhbw_InsertTypes$__replaceTVWithGeneric$1__Lhb_dhbw_Type__Lhb_dh
   }
 }
 function $p_Lhb_dhbw_InsertTypes$__substType$2__Lhb_dhbw_Type__sci_Set__Lhb_dhbw_Type($thiz, t, constraints$2) {
-  var this$3 = $as_sc_IterableOnceOps(constraints$2.map__F1__O(new $c_sjsr_AnonFunction1(((this$1, t$1) => ((x$12$2) => {
-    var x$12 = $as_Lhb_dhbw_Constraint(x$12$2);
-    if ((x$12 instanceof $c_Lhb_dhbw_EqualsDot)) {
-      var x2 = $as_Lhb_dhbw_EqualsDot(x$12);
+  var this$3 = $as_sc_IterableOnceOps(constraints$2.map__F1__O(new $c_sjsr_AnonFunction1(((this$1, t$1) => ((x$13$2) => {
+    var x$13 = $as_Lhb_dhbw_Constraint(x$13$2);
+    if ((x$13 instanceof $c_Lhb_dhbw_EqualsDot)) {
+      var x2 = $as_Lhb_dhbw_EqualsDot(x$13);
       var t1 = x2.Lhb_dhbw_EqualsDot__f_l;
       var t2 = x2.Lhb_dhbw_EqualsDot__f_r;
       return (t$1.equals__O__Z(t1) ? t2 : null)
     } else {
       return null
     }
-  }))($thiz, t)))).find__F1__s_Option(new $c_sjsr_AnonFunction1(((this$2) => ((x$13$2) => {
-    var x$13 = $as_Lhb_dhbw_Type(x$13$2);
-    return (x$13 !== null)
+  }))($thiz, t)))).find__F1__s_Option(new $c_sjsr_AnonFunction1(((this$2) => ((x$14$2) => {
+    var x$14 = $as_Lhb_dhbw_Type(x$14$2);
+    return (x$14 !== null)
   }))($thiz)));
   if (this$3.isEmpty__Z()) {
     var this$4 = $m_s_None$()
   } else {
     var arg1 = this$3.get__O();
-    var x$14 = $as_Lhb_dhbw_Type(arg1);
-    var this$4 = new $c_s_Some($p_Lhb_dhbw_InsertTypes$__replaceTVWithGeneric$1__Lhb_dhbw_Type__Lhb_dhbw_Type($thiz, x$14))
+    var x$15 = $as_Lhb_dhbw_Type(arg1);
+    var this$4 = new $c_s_Some($p_Lhb_dhbw_InsertTypes$__replaceTVWithGeneric$1__Lhb_dhbw_Type__Lhb_dhbw_Type($thiz, x$15))
   };
   return $as_Lhb_dhbw_Type((this$4.isEmpty__Z() ? ((t instanceof $c_Lhb_dhbw_TypeVariable) ? new $c_Lhb_dhbw_GenericType($as_Lhb_dhbw_TypeVariable(t).Lhb_dhbw_TypeVariable__f_name) : t) : this$4.get__O()))
 }
@@ -3280,8 +3597,8 @@ function $p_Lhb_dhbw_InsertTypes$__getAllTVs$1__Lhb_dhbw_Type__sci_Set($thiz, fr
     var t = null;
     while ((rest !== $m_sci_Nil$())) {
       var arg1 = rest.head__O();
-      var x$15 = $as_Lhb_dhbw_Type(arg1);
-      var it = $p_Lhb_dhbw_InsertTypes$__getAllTVs$1__Lhb_dhbw_Type__sci_Set($thiz, x$15).iterator__sc_Iterator();
+      var x$16 = $as_Lhb_dhbw_Type(arg1);
+      var it = $p_Lhb_dhbw_InsertTypes$__getAllTVs$1__Lhb_dhbw_Type__sci_Set($thiz, x$16).iterator__sc_Iterator();
       while (it.hasNext__Z()) {
         var nx = new $c_sci_$colon$colon(it.next__O(), $m_sci_Nil$());
         if ((t === null)) {
@@ -8924,6 +9241,131 @@ function $p_Lhb_dhbw_Unify$__getAUnifyLessDotC__sci_Set__sci_Set($thiz, from) {
     return false
   }))($thiz))))
 }
+function $p_Lhb_dhbw_Unify$__convert__Lhb_dhbw_FJType__Lhb_dhbw_UnifyType($thiz, fjType) {
+  if ((fjType instanceof $c_Lhb_dhbw_FJNamedType)) {
+    var x2 = $as_Lhb_dhbw_FJNamedType(fjType);
+    var n = x2.Lhb_dhbw_FJNamedType__f_name;
+    var p = x2.Lhb_dhbw_FJNamedType__f_params;
+    var f = ((this$1) => ((fjType$2$2) => {
+      var fjType$2 = $as_Lhb_dhbw_FJType(fjType$2$2);
+      return $p_Lhb_dhbw_Unify$__convert__Lhb_dhbw_FJType__Lhb_dhbw_UnifyType($m_Lhb_dhbw_Unify$(), fjType$2)
+    }))($thiz);
+    if ((p === $m_sci_Nil$())) {
+      var $$x1 = $m_sci_Nil$()
+    } else {
+      var arg1 = p.head__O();
+      var h = new $c_sci_$colon$colon(f(arg1), $m_sci_Nil$());
+      var t = h;
+      var rest = $as_sci_List(p.tail__O());
+      while ((rest !== $m_sci_Nil$())) {
+        var arg1$1 = rest.head__O();
+        var nx = new $c_sci_$colon$colon(f(arg1$1), $m_sci_Nil$());
+        t.sci_$colon$colon__f_next = nx;
+        t = nx;
+        rest = $as_sci_List(rest.tail__O())
+      };
+      var $$x1 = h
+    };
+    return new $c_Lhb_dhbw_UnifyRefType(n, $$x1)
+  } else if ((fjType instanceof $c_Lhb_dhbw_FJTypeVariable)) {
+    var x3 = $as_Lhb_dhbw_FJTypeVariable(fjType);
+    var n$2 = x3.Lhb_dhbw_FJTypeVariable__f_name;
+    return new $c_Lhb_dhbw_UnifyTV(n$2)
+  } else {
+    throw new $c_s_MatchError(fjType)
+  }
+}
+function $p_Lhb_dhbw_Unify$__convertNamedType__Lhb_dhbw_FJNamedType__Lhb_dhbw_UnifyRefType($thiz, fjType) {
+  var $$x2 = fjType.Lhb_dhbw_FJNamedType__f_name;
+  var this$2 = fjType.Lhb_dhbw_FJNamedType__f_params;
+  var f = ((this$1) => ((fjType$2$2) => {
+    var fjType$2 = $as_Lhb_dhbw_FJType(fjType$2$2);
+    return $p_Lhb_dhbw_Unify$__convert__Lhb_dhbw_FJType__Lhb_dhbw_UnifyType($m_Lhb_dhbw_Unify$(), fjType$2)
+  }))($thiz);
+  if ((this$2 === $m_sci_Nil$())) {
+    var $$x1 = $m_sci_Nil$()
+  } else {
+    var arg1 = this$2.head__O();
+    var h = new $c_sci_$colon$colon(f(arg1), $m_sci_Nil$());
+    var t = h;
+    var rest = $as_sci_List(this$2.tail__O());
+    while ((rest !== $m_sci_Nil$())) {
+      var arg1$1 = rest.head__O();
+      var nx = new $c_sci_$colon$colon(f(arg1$1), $m_sci_Nil$());
+      t.sci_$colon$colon__f_next = nx;
+      t = nx;
+      rest = $as_sci_List(rest.tail__O())
+    };
+    var $$x1 = h
+  };
+  return new $c_Lhb_dhbw_UnifyRefType($$x2, $$x1)
+}
+function $p_Lhb_dhbw_Unify$__convertRefType__Lhb_dhbw_UnifyRefType__Lhb_dhbw_FJNamedType($thiz, unifyType) {
+  var $$x2 = unifyType.Lhb_dhbw_UnifyRefType__f_name;
+  var this$2 = unifyType.Lhb_dhbw_UnifyRefType__f_params;
+  var f = ((this$1) => ((x$2$2) => {
+    var x$2 = $as_Lhb_dhbw_UnifyType(x$2$2);
+    return $p_Lhb_dhbw_Unify$__convert__Lhb_dhbw_UnifyType__Lhb_dhbw_FJType($m_Lhb_dhbw_Unify$(), x$2)
+  }))($thiz);
+  if ((this$2 === $m_sci_Nil$())) {
+    var $$x1 = $m_sci_Nil$()
+  } else {
+    var arg1 = this$2.head__O();
+    var h = new $c_sci_$colon$colon(f(arg1), $m_sci_Nil$());
+    var t = h;
+    var rest = $as_sci_List(this$2.tail__O());
+    while ((rest !== $m_sci_Nil$())) {
+      var arg1$1 = rest.head__O();
+      var nx = new $c_sci_$colon$colon(f(arg1$1), $m_sci_Nil$());
+      t.sci_$colon$colon__f_next = nx;
+      t = nx;
+      rest = $as_sci_List(rest.tail__O())
+    };
+    var $$x1 = h
+  };
+  return new $c_Lhb_dhbw_FJNamedType($$x2, $$x1)
+}
+function $p_Lhb_dhbw_Unify$__convert__Lhb_dhbw_UnifyType__Lhb_dhbw_FJType($thiz, unifyType) {
+  if ((unifyType instanceof $c_Lhb_dhbw_UnifyRefType)) {
+    var x2 = $as_Lhb_dhbw_UnifyRefType(unifyType);
+    var n = x2.Lhb_dhbw_UnifyRefType__f_name;
+    var p = x2.Lhb_dhbw_UnifyRefType__f_params;
+    var f = ((this$1) => ((x$3$2) => {
+      var x$3 = $as_Lhb_dhbw_UnifyType(x$3$2);
+      return $p_Lhb_dhbw_Unify$__convert__Lhb_dhbw_UnifyType__Lhb_dhbw_FJType($m_Lhb_dhbw_Unify$(), x$3)
+    }))($thiz);
+    if ((p === $m_sci_Nil$())) {
+      var $$x1 = $m_sci_Nil$()
+    } else {
+      var arg1 = p.head__O();
+      var h = new $c_sci_$colon$colon(f(arg1), $m_sci_Nil$());
+      var t = h;
+      var rest = $as_sci_List(p.tail__O());
+      while ((rest !== $m_sci_Nil$())) {
+        var arg1$1 = rest.head__O();
+        var nx = new $c_sci_$colon$colon(f(arg1$1), $m_sci_Nil$());
+        t.sci_$colon$colon__f_next = nx;
+        t = nx;
+        rest = $as_sci_List(rest.tail__O())
+      };
+      var $$x1 = h
+    };
+    return new $c_Lhb_dhbw_FJNamedType(n, $$x1)
+  } else if ((unifyType instanceof $c_Lhb_dhbw_UnifyTV)) {
+    var x3 = $as_Lhb_dhbw_UnifyTV(unifyType);
+    var n$2 = x3.Lhb_dhbw_UnifyTV__f_name;
+    return new $c_Lhb_dhbw_FJTypeVariable(n$2)
+  } else {
+    throw new $c_s_MatchError(unifyType)
+  }
+}
+function $p_Lhb_dhbw_Unify$__getSuperTypes__Lhb_dhbw_UnifyRefType__Lhb_dhbw_FiniteClosure__sci_Set($thiz, of, fc) {
+  var of$1 = $p_Lhb_dhbw_Unify$__convertRefType__Lhb_dhbw_UnifyRefType__Lhb_dhbw_FJNamedType($thiz, of);
+  return $as_sci_Set($p_Lhb_dhbw_FiniteClosure__calculateSupertypes__Lhb_dhbw_FJNamedType__sci_Set(fc, of$1).map__F1__O(new $c_sjsr_AnonFunction1(((this$1) => ((fjType$2) => {
+    var fjType = $as_Lhb_dhbw_FJNamedType(fjType$2);
+    return $p_Lhb_dhbw_Unify$__convertNamedType__Lhb_dhbw_FJNamedType__Lhb_dhbw_UnifyRefType($m_Lhb_dhbw_Unify$(), fjType)
+  }))($thiz))))
+}
 function $p_Lhb_dhbw_Unify$__isLinked__Lhb_dhbw_UnifyTV__Lhb_dhbw_UnifyTV__sci_Set__Z($thiz, a, b, aUnifyLessDota) {
   var rightsides = $as_sci_Set($p_Lhb_dhbw_Unify$__getRightSides$1__Lhb_dhbw_UnifyTV__sci_Set__sci_Set($thiz, a, aUnifyLessDota).map__F1__O(new $c_sjsr_AnonFunction1(((this$1) => ((c$2) => {
     var c = $as_Lhb_dhbw_UnifyLessDot(c$2);
@@ -9042,8 +9484,8 @@ function $p_Lhb_dhbw_Unify$__getAllTvs__Lhb_dhbw_UnifyType__sci_Set($thiz, in$1)
     var t = null;
     while ((rest !== $m_sci_Nil$())) {
       var arg1 = rest.head__O();
-      var x$6 = $as_Lhb_dhbw_UnifyType(arg1);
-      var it = $p_Lhb_dhbw_Unify$__getAllTvs__Lhb_dhbw_UnifyType__sci_Set($m_Lhb_dhbw_Unify$(), x$6).iterator__sc_Iterator();
+      var x$8 = $as_Lhb_dhbw_UnifyType(arg1);
+      var it = $p_Lhb_dhbw_Unify$__getAllTvs__Lhb_dhbw_UnifyType__sci_Set($m_Lhb_dhbw_Unify$(), x$8).iterator__sc_Iterator();
       while (it.hasNext__Z()) {
         var nx = new $c_sci_$colon$colon(it.next__O(), $m_sci_Nil$());
         if ((t === null)) {
@@ -9167,9 +9609,9 @@ function $p_Lhb_dhbw_Unify$__substCall$1__sci_Set__T2($thiz, eq) {
   } else {
     var arg1 = this$6.get__O();
     var c$3 = $as_Lhb_dhbw_UnifyConstraint(arg1);
-    var this$8 = new $c_s_Some(new $c_T2($m_Lhb_dhbw_Unify$().subst__Lhb_dhbw_UnifyTV__Lhb_dhbw_UnifyType__sci_Set__sci_Set($as_Lhb_dhbw_UnifyTV(c$3.left__Lhb_dhbw_UnifyType()), c$3.right__Lhb_dhbw_UnifyType(), $as_sci_Set(eq.filter__F1__O(new $c_sjsr_AnonFunction1(((this$7, c$1) => ((x$4$2) => {
-      var x$4 = $as_Lhb_dhbw_UnifyConstraint(x$4$2);
-      return (!x$4.equals__O__Z(c$1))
+    var this$8 = new $c_s_Some(new $c_T2($m_Lhb_dhbw_Unify$().subst__Lhb_dhbw_UnifyTV__Lhb_dhbw_UnifyType__sci_Set__sci_Set($as_Lhb_dhbw_UnifyTV(c$3.left__Lhb_dhbw_UnifyType()), c$3.right__Lhb_dhbw_UnifyType(), $as_sci_Set(eq.filter__F1__O(new $c_sjsr_AnonFunction1(((this$7, c$1) => ((x$6$2) => {
+      var x$6 = $as_Lhb_dhbw_UnifyConstraint(x$6$2);
+      return (!x$6.equals__O__Z(c$1))
     }))($thiz, c$3))))), new $c_s_Some(c$3)))
   };
   return $as_T2((this$8.isEmpty__Z() ? new $c_T2(eq, $m_s_None$()) : this$8.get__O()))
@@ -9270,8 +9712,7 @@ $c_Lhb_dhbw_Unify$.prototype.step2__sci_Set__Lhb_dhbw_FiniteClosure__Lhb_dhbw_Ca
         if ((p4$1 instanceof $c_Lhb_dhbw_UnifyTV)) {
           var x6 = $as_Lhb_dhbw_UnifyTV(p4$1);
           var a = x6.Lhb_dhbw_UnifyTV__f_name;
-          var of = new $c_Lhb_dhbw_UnifyRefType(name, params);
-          return $as_sci_Set($p_Lhb_dhbw_FiniteClosure__calculateSupertypes__Lhb_dhbw_UnifyRefType__sci_Set(fc$1, of).map__F1__O(new $c_sjsr_AnonFunction1(((this$3, a$1) => ((superType$2) => {
+          return $as_sci_Set($p_Lhb_dhbw_Unify$__getSuperTypes__Lhb_dhbw_UnifyRefType__Lhb_dhbw_FiniteClosure__sci_Set($m_Lhb_dhbw_Unify$(), new $c_Lhb_dhbw_UnifyRefType(name, params), fc$1).map__F1__O(new $c_sjsr_AnonFunction1(((this$3, a$1) => ((superType$2) => {
             var superType = $as_Lhb_dhbw_UnifyRefType(superType$2);
             var this$7 = $m_s_Predef$().s_Predef$__f_Set;
             var array = [new $c_Lhb_dhbw_UnifyEqualsDot(new $c_Lhb_dhbw_UnifyTV(a$1), superType)];
@@ -9358,8 +9799,7 @@ $c_Lhb_dhbw_Unify$.prototype.step2__sci_Set__Lhb_dhbw_FiniteClosure__Lhb_dhbw_Ca
           var array$4 = [this$22.from__sc_IterableOnce__sci_Set(elems$3)];
           var elems$4 = $ct_sjsr_WrappedVarArgs__sjs_js_Array__(new $c_sjsr_WrappedVarArgs(), array$4);
           var this$32 = this$26.from__sc_IterableOnce__sci_Set(elems$4);
-          var of$1 = $as_Lhb_dhbw_UnifyRefType(ac.Lhb_dhbw_UnifyConstraint__f_right);
-          var suffix = $as_sc_IterableOnce($p_Lhb_dhbw_FiniteClosure__calculateSupertypes__Lhb_dhbw_UnifyRefType__sci_Set(fc$2, of$1).map__F1__O(new $c_sjsr_AnonFunction1(((this$27, b$3) => ((superType$2$1) => {
+          var suffix = $as_sc_IterableOnce($p_Lhb_dhbw_Unify$__getSuperTypes__Lhb_dhbw_UnifyRefType__Lhb_dhbw_FiniteClosure__sci_Set($m_Lhb_dhbw_Unify$(), $as_Lhb_dhbw_UnifyRefType(ac.Lhb_dhbw_UnifyConstraint__f_right), fc$2).map__F1__O(new $c_sjsr_AnonFunction1(((this$27, b$3) => ((superType$2$1) => {
             var superType$1 = $as_Lhb_dhbw_UnifyRefType(superType$2$1);
             var this$31 = $m_s_Predef$().s_Predef$__f_Set;
             var array$5 = [new $c_Lhb_dhbw_UnifyEqualsDot(b$3, superType$1)];
@@ -9564,16 +10004,11 @@ $c_Lhb_dhbw_Unify$.prototype.adaptRule__sci_Set__Lhb_dhbw_FiniteClosure__sci_Set
           var x6 = $as_Lhb_dhbw_UnifyRefType(p4);
           var bn = x6.Lhb_dhbw_UnifyRefType__f_name;
           var bp = x6.Lhb_dhbw_UnifyRefType__f_params;
-          if (fc$1.isPossibleSupertype__T__T__Z(an, bn)) {
-            var of = new $c_Lhb_dhbw_UnifyRefType(an, ap);
-            return new $c_Lhb_dhbw_UnifyEqualsDot($as_Lhb_dhbw_UnifyType($p_Lhb_dhbw_FiniteClosure__calculateSupertypes__Lhb_dhbw_UnifyRefType__sci_Set(fc$1, of).find__F1__s_Option(new $c_sjsr_AnonFunction1(((this$2, bn$1) => ((r$2) => {
-              var r = $as_Lhb_dhbw_UnifyRefType(r$2);
-              var this$3 = r.Lhb_dhbw_UnifyRefType__f_name;
-              return (this$3 === bn$1)
-            }))(this$1, bn))).get__O()), new $c_Lhb_dhbw_UnifyRefType(bn, bp))
-          } else {
-            return new $c_Lhb_dhbw_UnifyLessDot(new $c_Lhb_dhbw_UnifyRefType(an, ap), new $c_Lhb_dhbw_UnifyRefType(bn, bp))
-          }
+          return (fc$1.isPossibleSupertype__T__T__Z(an, bn) ? new $c_Lhb_dhbw_UnifyEqualsDot($as_Lhb_dhbw_UnifyType($p_Lhb_dhbw_Unify$__getSuperTypes__Lhb_dhbw_UnifyRefType__Lhb_dhbw_FiniteClosure__sci_Set($m_Lhb_dhbw_Unify$(), new $c_Lhb_dhbw_UnifyRefType(an, ap), fc$1).find__F1__s_Option(new $c_sjsr_AnonFunction1(((this$2, bn$1) => ((r$2) => {
+            var r = $as_Lhb_dhbw_UnifyRefType(r$2);
+            var this$3 = r.Lhb_dhbw_UnifyRefType__f_name;
+            return (this$3 === bn$1)
+          }))(this$1, bn))).get__O()), new $c_Lhb_dhbw_UnifyRefType(bn, bp)) : new $c_Lhb_dhbw_UnifyLessDot(new $c_Lhb_dhbw_UnifyRefType(an, ap), new $c_Lhb_dhbw_UnifyRefType(bn, bp)))
         }
       }
     };
@@ -9611,10 +10046,10 @@ $c_Lhb_dhbw_Unify$.prototype.adoptRule__sci_Set__Lhb_dhbw_FiniteClosure__sci_Set
   return $as_sci_Set(this$5.concat__sc_IterableOnce__sc_SetOps(that))
 });
 $c_Lhb_dhbw_Unify$.prototype.eraseRule__sci_Set__sci_Set = (function(eq) {
-  return $as_sci_Set(eq.filter__F1__O(new $c_sjsr_AnonFunction1(((this$1) => ((x$2$2) => {
-    var x$2 = $as_Lhb_dhbw_UnifyConstraint(x$2$2);
-    if ((x$2 instanceof $c_Lhb_dhbw_UnifyEqualsDot)) {
-      var x2 = $as_Lhb_dhbw_UnifyEqualsDot(x$2);
+  return $as_sci_Set(eq.filter__F1__O(new $c_sjsr_AnonFunction1(((this$1) => ((x$4$2) => {
+    var x$4 = $as_Lhb_dhbw_UnifyConstraint(x$4$2);
+    if ((x$4 instanceof $c_Lhb_dhbw_UnifyEqualsDot)) {
+      var x2 = $as_Lhb_dhbw_UnifyEqualsDot(x$4);
       var p3 = x2.Lhb_dhbw_UnifyConstraint__f_left;
       var p4 = x2.Lhb_dhbw_UnifyConstraint__f_right;
       if ((p3 instanceof $c_Lhb_dhbw_UnifyTV)) {
@@ -9648,8 +10083,8 @@ $c_Lhb_dhbw_Unify$.prototype.equalsRule__sci_Set__s_Option = (function(eq) {
     var it = this$2.iterator__sc_Iterator();
     while (it.hasNext__Z()) {
       var a = it.next__O();
-      var x$3 = $as_sci_List(a);
-      if ((!x$3.isEmpty__Z())) {
+      var x$5 = $as_sci_List(a);
+      if ((!x$5.isEmpty__Z())) {
         var circle = new $c_s_Some(a);
         break _return
       }
@@ -9740,15 +10175,15 @@ $c_Lhb_dhbw_Unify$.prototype.subst__Lhb_dhbw_UnifyTV__Lhb_dhbw_UnifyType__sci_Se
   }))(this, a, substType))))
 });
 $c_Lhb_dhbw_Unify$.prototype.isSolvedForm__sci_Set__Z = (function(eq) {
-  return ($as_sc_IterableOnceOps(eq.filter__F1__O(new $c_sjsr_AnonFunction1(((this$1) => ((x$5$2) => {
-    var x$5 = $as_Lhb_dhbw_UnifyConstraint(x$5$2);
+  return ($as_sc_IterableOnceOps(eq.filter__F1__O(new $c_sjsr_AnonFunction1(((this$1) => ((x$7$2) => {
+    var x$7 = $as_Lhb_dhbw_UnifyConstraint(x$7$2);
     var rc25 = false;
     var x2 = null;
     var rc26 = false;
     var x12 = null;
-    if ((x$5 instanceof $c_Lhb_dhbw_UnifyLessDot)) {
+    if ((x$7 instanceof $c_Lhb_dhbw_UnifyLessDot)) {
       rc25 = true;
-      x2 = $as_Lhb_dhbw_UnifyLessDot(x$5);
+      x2 = $as_Lhb_dhbw_UnifyLessDot(x$7);
       var this$2 = x2;
       var p3 = this$2.Lhb_dhbw_UnifyConstraint__f_left;
       var this$3 = x2;
@@ -9773,9 +10208,9 @@ $c_Lhb_dhbw_Unify$.prototype.isSolvedForm__sci_Set__Z = (function(eq) {
         }
       }
     };
-    if ((x$5 instanceof $c_Lhb_dhbw_UnifyEqualsDot)) {
+    if ((x$7 instanceof $c_Lhb_dhbw_UnifyEqualsDot)) {
       rc26 = true;
-      x12 = $as_Lhb_dhbw_UnifyEqualsDot(x$5);
+      x12 = $as_Lhb_dhbw_UnifyEqualsDot(x$7);
       var this$6 = x12;
       var p13 = this$6.Lhb_dhbw_UnifyConstraint__f_left;
       var this$7 = x12;
@@ -21592,6 +22027,148 @@ var $d_Lhb_dhbw_EqualsDot = new $TypeData().initClass({
   Ljava_io_Serializable: 1
 });
 $c_Lhb_dhbw_EqualsDot.prototype.$classData = $d_Lhb_dhbw_EqualsDot;
+/** @constructor */
+function $c_Lhb_dhbw_FJNamedType(name, params) {
+  this.Lhb_dhbw_FJNamedType__f_name = null;
+  this.Lhb_dhbw_FJNamedType__f_params = null;
+  this.Lhb_dhbw_FJNamedType__f_name = name;
+  this.Lhb_dhbw_FJNamedType__f_params = params
+}
+$c_Lhb_dhbw_FJNamedType.prototype = new $h_O();
+$c_Lhb_dhbw_FJNamedType.prototype.constructor = $c_Lhb_dhbw_FJNamedType;
+/** @constructor */
+function $h_Lhb_dhbw_FJNamedType() {
+  /*<skip>*/
+}
+$h_Lhb_dhbw_FJNamedType.prototype = $c_Lhb_dhbw_FJNamedType.prototype;
+$c_Lhb_dhbw_FJNamedType.prototype.productPrefix__T = (function() {
+  return "FJNamedType"
+});
+$c_Lhb_dhbw_FJNamedType.prototype.productArity__I = (function() {
+  return 2
+});
+$c_Lhb_dhbw_FJNamedType.prototype.productElement__I__O = (function(x$1) {
+  switch (x$1) {
+    case 0: {
+      return this.Lhb_dhbw_FJNamedType__f_name;
+      break
+    }
+    case 1: {
+      return this.Lhb_dhbw_FJNamedType__f_params;
+      break
+    }
+    default: {
+      return $m_sr_Statics$().ioobe__I__O(x$1)
+    }
+  }
+});
+$c_Lhb_dhbw_FJNamedType.prototype.productIterator__sc_Iterator = (function() {
+  return new $c_sr_ScalaRunTime$$anon$1(this)
+});
+$c_Lhb_dhbw_FJNamedType.prototype.hashCode__I = (function() {
+  var this$2 = $m_s_util_hashing_MurmurHash3$();
+  return this$2.productHash__s_Product__I__Z__I(this, (-889275714), false)
+});
+$c_Lhb_dhbw_FJNamedType.prototype.toString__T = (function() {
+  return $m_sr_ScalaRunTime$()._toString__s_Product__T(this)
+});
+$c_Lhb_dhbw_FJNamedType.prototype.equals__O__Z = (function(x$1) {
+  if ((this === x$1)) {
+    return true
+  } else if ((x$1 instanceof $c_Lhb_dhbw_FJNamedType)) {
+    var FJNamedType$1 = $as_Lhb_dhbw_FJNamedType(x$1);
+    if ((this.Lhb_dhbw_FJNamedType__f_name === FJNamedType$1.Lhb_dhbw_FJNamedType__f_name)) {
+      var x = this.Lhb_dhbw_FJNamedType__f_params;
+      var x$2 = FJNamedType$1.Lhb_dhbw_FJNamedType__f_params;
+      return ((x === null) ? (x$2 === null) : x.equals__O__Z(x$2))
+    } else {
+      return false
+    }
+  } else {
+    return false
+  }
+});
+function $as_Lhb_dhbw_FJNamedType(obj) {
+  return (((obj instanceof $c_Lhb_dhbw_FJNamedType) || (obj === null)) ? obj : $throwClassCastException(obj, "hb.dhbw.FJNamedType"))
+}
+function $isArrayOf_Lhb_dhbw_FJNamedType(obj, depth) {
+  return (!(!(((obj && obj.$classData) && (obj.$classData.arrayDepth === depth)) && obj.$classData.arrayBase.ancestors.Lhb_dhbw_FJNamedType)))
+}
+function $asArrayOf_Lhb_dhbw_FJNamedType(obj, depth) {
+  return (($isArrayOf_Lhb_dhbw_FJNamedType(obj, depth) || (obj === null)) ? obj : $throwArrayCastException(obj, "Lhb.dhbw.FJNamedType;", depth))
+}
+var $d_Lhb_dhbw_FJNamedType = new $TypeData().initClass({
+  Lhb_dhbw_FJNamedType: 0
+}, false, "hb.dhbw.FJNamedType", {
+  Lhb_dhbw_FJNamedType: 1,
+  O: 1,
+  Lhb_dhbw_FJType: 1,
+  s_Product: 1,
+  s_Equals: 1,
+  Ljava_io_Serializable: 1
+});
+$c_Lhb_dhbw_FJNamedType.prototype.$classData = $d_Lhb_dhbw_FJNamedType;
+/** @constructor */
+function $c_Lhb_dhbw_FJTypeVariable(name) {
+  this.Lhb_dhbw_FJTypeVariable__f_name = null;
+  this.Lhb_dhbw_FJTypeVariable__f_name = name
+}
+$c_Lhb_dhbw_FJTypeVariable.prototype = new $h_O();
+$c_Lhb_dhbw_FJTypeVariable.prototype.constructor = $c_Lhb_dhbw_FJTypeVariable;
+/** @constructor */
+function $h_Lhb_dhbw_FJTypeVariable() {
+  /*<skip>*/
+}
+$h_Lhb_dhbw_FJTypeVariable.prototype = $c_Lhb_dhbw_FJTypeVariable.prototype;
+$c_Lhb_dhbw_FJTypeVariable.prototype.productPrefix__T = (function() {
+  return "FJTypeVariable"
+});
+$c_Lhb_dhbw_FJTypeVariable.prototype.productArity__I = (function() {
+  return 1
+});
+$c_Lhb_dhbw_FJTypeVariable.prototype.productElement__I__O = (function(x$1) {
+  return ((x$1 === 0) ? this.Lhb_dhbw_FJTypeVariable__f_name : $m_sr_Statics$().ioobe__I__O(x$1))
+});
+$c_Lhb_dhbw_FJTypeVariable.prototype.productIterator__sc_Iterator = (function() {
+  return new $c_sr_ScalaRunTime$$anon$1(this)
+});
+$c_Lhb_dhbw_FJTypeVariable.prototype.hashCode__I = (function() {
+  var this$2 = $m_s_util_hashing_MurmurHash3$();
+  return this$2.productHash__s_Product__I__Z__I(this, (-889275714), false)
+});
+$c_Lhb_dhbw_FJTypeVariable.prototype.toString__T = (function() {
+  return $m_sr_ScalaRunTime$()._toString__s_Product__T(this)
+});
+$c_Lhb_dhbw_FJTypeVariable.prototype.equals__O__Z = (function(x$1) {
+  if ((this === x$1)) {
+    return true
+  } else if ((x$1 instanceof $c_Lhb_dhbw_FJTypeVariable)) {
+    var FJTypeVariable$1 = $as_Lhb_dhbw_FJTypeVariable(x$1);
+    return (this.Lhb_dhbw_FJTypeVariable__f_name === FJTypeVariable$1.Lhb_dhbw_FJTypeVariable__f_name)
+  } else {
+    return false
+  }
+});
+function $as_Lhb_dhbw_FJTypeVariable(obj) {
+  return (((obj instanceof $c_Lhb_dhbw_FJTypeVariable) || (obj === null)) ? obj : $throwClassCastException(obj, "hb.dhbw.FJTypeVariable"))
+}
+function $isArrayOf_Lhb_dhbw_FJTypeVariable(obj, depth) {
+  return (!(!(((obj && obj.$classData) && (obj.$classData.arrayDepth === depth)) && obj.$classData.arrayBase.ancestors.Lhb_dhbw_FJTypeVariable)))
+}
+function $asArrayOf_Lhb_dhbw_FJTypeVariable(obj, depth) {
+  return (($isArrayOf_Lhb_dhbw_FJTypeVariable(obj, depth) || (obj === null)) ? obj : $throwArrayCastException(obj, "Lhb.dhbw.FJTypeVariable;", depth))
+}
+var $d_Lhb_dhbw_FJTypeVariable = new $TypeData().initClass({
+  Lhb_dhbw_FJTypeVariable: 0
+}, false, "hb.dhbw.FJTypeVariable", {
+  Lhb_dhbw_FJTypeVariable: 1,
+  O: 1,
+  Lhb_dhbw_FJType: 1,
+  s_Product: 1,
+  s_Equals: 1,
+  Ljava_io_Serializable: 1
+});
+$c_Lhb_dhbw_FJTypeVariable.prototype.$classData = $d_Lhb_dhbw_FJTypeVariable;
 /** @constructor */
 function $c_Lhb_dhbw_FieldVar(e, f) {
   this.Lhb_dhbw_FieldVar__f_e = null;

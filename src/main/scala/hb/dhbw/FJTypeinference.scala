@@ -47,27 +47,33 @@ object FJTypeinference {
       case RefType(n, p) => FJNamedType(n,p.map(convertToFJType))
     }
     def methodIsSupertype(m : Method, superMethod: Method) = {
-      def getBound(t: Type) = t match {
+      def getBound(t: Type): Type = t match {
         case GenericType(x) =>
           (in.genericParams ++ m.genericParams.map(c => (c.asInstanceOf[LessDot].l, c.asInstanceOf[LessDot].r)))
-          .find(p => p._1.equals(GenericType(x))).map(_._2).get
+          .find(p => p._1.equals(GenericType(x))).map(_._2).map(getBound).get
         case x => x
       }
-      finiteClosure.aIsSubtypeOfb(convertToFJType(getBound(m.retType)), convertToFJType(getBound(superMethod.retType)))
+      if(m.params.size != superMethod.params.size){
+        false
+      }else{
+        var returnIsSub = finiteClosure.aIsSubtypeOfb(convertToFJType(getBound(m.retType)), convertToFJType(getBound(superMethod.retType)))
+        returnIsSub && m.params.zip(superMethod.params).foldLeft(true)((isSub, m2) =>
+          isSub && finiteClosure.aIsSubtypeOfb(convertToFJType(getBound(m2._1._1)), convertToFJType(getBound(m2._2._1))))
+      }
     }
 
-    val methodNames = in.methods.map(_.name)
+    val methodNames = in.methods.map(_.name).toSet
     val newMethods = methodNames.flatMap(mName => {
       val overloadedMethods = in.methods.filter(_.name.equals(mName))
       overloadedMethods.foldLeft(Set[Method]())((ms, m)=>{
         if(ms.find(methodIsSupertype(_, m)).isDefined) { //If there is a method which is more general
           ms //do not add this method
         }else { //otherwise check if this method shadows another method
-          ms.filter(methodIsSupertype(m, _))
+          ms.filter(methodIsSupertype(m, _)) + m
         }
       })
     })
-    Class(in.name, in.genericParams, in.superType, in.fields, newMethods)
+    Class(in.name, in.genericParams, in.superType, in.fields, newMethods.toList)
   }
 
   def typeinference(str: String): Either[String, (Set[Set[UnifyConstraint]], List[Class])] = {
@@ -88,7 +94,7 @@ object FJTypeinference {
       unifyResults
     })
     val fc = generateFC(typedClasses)
-    //typedClasses =
+    typedClasses =
     typedClasses.map(cl => {
       removeOverloadedSubtypeMethods(cl, fc)
     })

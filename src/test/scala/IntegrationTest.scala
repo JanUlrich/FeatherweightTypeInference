@@ -90,7 +90,44 @@ class IntegrationTest extends FunSuite {
     val result = FJTypeinference.typeinference(input)
     println(result.map(it => Main.prettyPrintAST(it._2)))
   }
+
+  test("Function.typeAnnotaded") {
+    val input = "\nclass Function<A extends Object, B extends Object> extends Object{\nB b;\nB apply(A a){\nreturn this.b;\n}\n\n}"
+    val result = FJTypeinference.typeinference(input)
+    println(result.map(it => Main.prettyPrintAST(it._2)))
+  }
+
+  test("Box.Map") {
+    val input = "class Function<A extends Object, B extends Object> extends Object{\nB b;\nB apply(A a){\nreturn this.b;\n}\n}\n\n\nclass Box<S extends Object> extends Object {\nS val ;\nmap( f ) {\nreturn new Box(f.apply(this.val)) ;\n}\n}"
+    val result = FJTypeinference.typeinference(input)
+    println(result.map(it => Main.prettyPrintAST(it._2)))
+  }
   /*
+
+class Function<A extends Object, B extends Object> extends Object{
+B b;
+B apply(A a){
+return this.b;
+}
+}
+
+
+class Box<S extends Object> extends Object {
+S val ;
+map( f ) {
+return new Box(f.apply(this.val)) ;
+}
+}
+
+class Function<A extends Object, B extends Object> extends Object{
+B b;
+B apply(A a){
+return this.b;
+}
+
+}
+
+
 class RecursiveMethods extends Object{
 
 a1(x){ return this.a2(x);}
