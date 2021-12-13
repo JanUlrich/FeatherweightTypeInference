@@ -102,7 +102,31 @@ class IntegrationTest extends FunSuite {
     val result = FJTypeinference.typeinference(input)
     println(result.map(it => Main.prettyPrintAST(it._2)))
   }
+
+  test("PrincipalType") {
+    val input = "\nclass List<A extends Object> extends Object{\n  A head;\n  List<A> tail;\n  add( a){\n    return new List(a, this);\n  }\n  get(){\n    return this.head;\n  }\n}\n\nclass PrincipleType extends Object {\n  function(a){\n    return a.add(this).get();\n  }\n}"
+    val result = FJTypeinference.typeinference(input)
+    println(result.map(it => Main.prettyPrintAST(it._2)))
+  }
   /*
+
+class List<A extends Object> extends Object{
+  A head;
+  List<A> tail;
+  add( a){
+    return new List(a, this);
+  }
+  get(){
+    return this.head;
+  }
+}
+
+class PrincipleType extends Object {
+  function(a){
+    return a.add(this).get();
+  }
+}
+
 
 class Function<A extends Object, B extends Object> extends Object{
 B b;

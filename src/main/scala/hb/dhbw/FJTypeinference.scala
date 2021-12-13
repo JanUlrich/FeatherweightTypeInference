@@ -56,9 +56,11 @@ object FJTypeinference {
       if(m.params.size != superMethod.params.size){
         false
       }else{
-        var returnIsSub = finiteClosure.aIsSubtypeOfb(convertToFJType(getBound(m.retType)), convertToFJType(getBound(superMethod.retType)))
-        returnIsSub && m.params.zip(superMethod.params).foldLeft(true)((isSub, m2) =>
-          isSub && finiteClosure.aIsSubtypeOfb(convertToFJType(getBound(m2._1._1)), convertToFJType(getBound(m2._2._1))))
+        val returnIsSub = finiteClosure.aIsSubtypeOfb(convertToFJType(getBound(m.retType)), convertToFJType(getBound(superMethod.retType)))
+        val paramsAreSup = m.params.zip(superMethod.params).foldLeft(true)((isSub, m2) => {
+          isSub && finiteClosure.aIsSubtypeOfb(convertToFJType(getBound(m2._2._1)), convertToFJType(getBound(m2._1._1)))
+        })
+        returnIsSub && paramsAreSup
       }
     }
 
@@ -69,7 +71,7 @@ object FJTypeinference {
         if(ms.find(methodIsSupertype(_, m)).isDefined) { //If there is a method which is more general
           ms //do not add this method
         }else { //otherwise check if this method shadows another method
-          ms.filter(methodIsSupertype(m, _)) + m
+          ms.filter(!methodIsSupertype(m, _)) + m
         }
       })
     })
