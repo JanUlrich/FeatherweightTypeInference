@@ -8,7 +8,7 @@ final case class ParserMethod(retType: Option[NType], name: String, params: List
 final case class NType(name: String, params: List[NType])
 
 object Parser {
-  val keywords = Set("class", "new", "extends")
+  val keywords = Set("class", "new", "extends", "return", "this")
   def kw[_: P](s: String) = s ~~ !(letter | digit | "_" | "'")
 
   def letter[_: P]     = P( lowercase | uppercase )
@@ -17,12 +17,14 @@ object Parser {
   def digit[_: P]      = P( CharIn("0-9") )
   def number[_: P]: P[Int] = P( CharIn("0-9").repX(1).!.map(_.toInt) )
   def ident[_: P]: P[String] =
-    P( (letter | "_") ~~ (letter | digit | "_" | "'").repX ).!.filter(!keywords(_))
+    P( (letter) ~~ (letter | digit).repX ).!.filter(!keywords(_))
 
   def fieldVar[_: P]: P[Expr] = P( ".".! ~ ident ).map(ite => FieldVar(null, ite._2) )
   def prefixMethodCall[_: P]: P[Expr] = P( "." ~ methodCall)
-  def methodCall[_: P]: P[MethodCall] =P( ident ~ paramList ).map(ite => MethodCall(null, ite._1, ite._2) )
-  def paramList[_: P] : P[List[Expr]]= P("(".! ~ (expr ~ (",".! ~ expr).rep.map(_.toList.map{_._2})).? ~ ")".! ).map(ite => ite._2.map(params => params._1 :: params._2).getOrElse(List.empty))
+  def methodCall[_: P]: P[MethodCall] = P( ident ~ paramList ).map(ite => MethodCall(null, ite._1, ite._2) )
+  def paramList[_: P] : P[List[Expr]] =
+    P("(".! ~ (expr ~ (",".! ~ expr).rep.map(_.toList.map{_._2})).? ~ ")".! )
+    .map(ite => ite._2.map(params => params._1 :: params._2).getOrElse(List.empty))
   def variable[_: P]: P[Expr] = P(ident).map(LocalVar)
   def expr[_: P]: P[Expr] = P( (variable | constructor)~ (prefixMethodCall | fieldVar).rep.map(_.toList) )
     .map(ite => ite._2.foldLeft(ite._1) { (e1 : Expr, e2 : Expr) =>
@@ -38,10 +40,14 @@ object Parser {
     .map(ite => ParserClass(ite._1, ite._2.getOrElse(List()),ite._3,  ite._4.toList, ite._5.toList))
   def field[_: P]: P[(NType, String)] = P(typeParser ~ ident ~ ";")
   def parameterDef[_ : P]: P[(Option[NType], String)] = P((typeParser.? ~ ident) | ident.map((None, _)))
-  def method[_: P]: P[ParserMethod] = P(parameterDef ~ (("("~")").map(it => List()) | ("(" ~ parameterDef ~ ("," ~ parameterDef).rep(0) ~ ")").map(ite => (ite._1, ite._2) +: ite._3.toList))
+  def method[_: P]: P[ParserMethod] =
+    P(parameterDef ~ (("("~")").map(it => List()) | ("(" ~ parameterDef ~ ("," ~ parameterDef).rep(0) ~ ")")
+      .map(ite => (ite._1, ite._2) +: ite._3.toList))
     ~ "{" ~ kw("return") ~ expr ~ ";" ~ "}")
     .map(ite => ParserMethod(ite._1, ite._2, ite._3, ite._4))
-  def genericParamList[_: P]: P[List[(NType,NType)]] = P("<" ~ (typeParser ~ kw("extends") ~ typeParser) ~ ("," ~ (typeParser ~ kw("extends") ~ typeParser)).rep(0) ~ ">").map(ite => List((ite._1, ite._2)) ++ ite._3.map(ite3 => (ite3._1, ite3._2)))
+  def genericParamList[_: P]: P[List[(NType,NType)]] =
+    P("<" ~ (typeParser ~ kw("extends") ~ typeParser) ~ ("," ~ (typeParser ~ kw("extends") ~ typeParser)).rep(0) ~ ">")
+      .map(ite => List((ite._1, ite._2)) ++ ite._3.map(ite3 => (ite3._1, ite3._2)))
   def typeParser[_: P]: P[NType] = P(ident ~ ("<" ~ typeParser ~ ("," ~ typeParser).rep(0) ~  ">").?)
     .map(ite => NType(ite._1, ite._2.map(ite => List(ite._1) ++ ite._2).getOrElse(List())))
 

@@ -31,12 +31,12 @@ class ParserTest extends FunSuite {
   }
 
   test("Parser.classDefinition"){
-    println(fastparse.parse("class Test{\n m(a,b){return a;}}", hb.dhbw.Parser.classDefinition(_)))
-    assert(fastparse.parse("class Test{m(a,b){return a;}}", hb.dhbw.Parser.classDefinition(_)).isSuccess)
+    println(fastparse.parse("class Test extends Object{\n m(a,b){return a;}}", hb.dhbw.Parser.classDefinition(_)))
+    assert(fastparse.parse("class Test extends Object {m(a,b){return a;}}", hb.dhbw.Parser.classDefinition(_)).isSuccess)
   }
   test("Parser.classDefinition.generics"){
-    println(fastparse.parse("class Test{\n m(a,b){return a;}}", hb.dhbw.Parser.classDefinition(_)))
-    assert(fastparse.parse("class Test{m(a,b){return a;}}", hb.dhbw.Parser.classDefinition(_)).isSuccess)
+    println(fastparse.parse("class Test extends Object {\n m(a,b){return a;}}", hb.dhbw.Parser.classDefinition(_)))
+    assert(fastparse.parse("class Test extends Object {m(a,b){return a;}}", hb.dhbw.Parser.classDefinition(_)).isSuccess)
   }
 
   test("Parser.genericParamList"){
