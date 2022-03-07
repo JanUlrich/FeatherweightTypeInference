@@ -8,8 +8,7 @@ final case class ParserMethod(retType: Option[NType], name: String, params: List
 final case class NType(name: String, params: List[NType])
 
 object Parser {
-  val keywords = Set("class", "new", "extends", "return", "this")
-  def kw[_: P](s: String) = s ~~ !(letter | digit | "_" | "'")
+  def kw[_: P](s: String) = s ~~ !(letter | digit)
 
   def letter[_: P]     = P( lowercase | uppercase )
   def lowercase[_: P]  = P( CharIn("a-z") )
@@ -17,7 +16,7 @@ object Parser {
   def digit[_: P]      = P( CharIn("0-9") )
   def number[_: P]: P[Int] = P( CharIn("0-9").repX(1).!.map(_.toInt) )
   def ident[_: P]: P[String] =
-    P( (letter) ~~ (letter | digit).repX ).!.filter(!keywords(_))
+    P( (letter) ~~ (letter | digit).repX ).!
 
   def fieldVar[_: P]: P[Expr] = P( ".".! ~ ident ).map(ite => FieldVar(null, ite._2) )
   def prefixMethodCall[_: P]: P[Expr] = P( "." ~ methodCall)

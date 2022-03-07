@@ -43,4 +43,9 @@ class ParserTest extends FunSuite {
     println(fastparse.parse("<Test extends Object>", hb.dhbw.Parser.genericParamList(_)))
     println(fastparse.parse("<Test extends Object, Test<Object> extends Test<Object>>", hb.dhbw.Parser.genericParamList(_)))
   }
+
+  test("Parser.this"){
+    println(fastparse.parse("this", hb.dhbw.Parser.expr(_)))
+    println(fastparse.parse("this.m()", hb.dhbw.Parser.expr(_)))
+  }
 }
