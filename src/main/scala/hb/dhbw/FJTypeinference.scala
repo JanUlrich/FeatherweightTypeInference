@@ -29,7 +29,7 @@ object FJTypeinference {
   private def convertSingleConstraint(constraint: Constraint) = constraint match {
     case LessDot(l, r) => UnifyLessDot(convertType(l),convertType(r))
     case EqualsDot(l, r) => UnifyEqualsDot(convertType(l),convertType(r))
-    case _ => throw new Exception("Error: Möglicherweise zu tiefe Verschachtelung von OrConstraints")
+    case _ => throw new Exception("Error: Internal Error considering Or-Constraints")
   }
 
   private def generateFC(ast: List[Class]): FiniteClosure = new FiniteClosure(

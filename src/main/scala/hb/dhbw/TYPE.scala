@@ -88,6 +88,10 @@ object TYPE {
           cl.genericParams.map(gp => LessDot(gp._1, gp._2))
         (RefType(className, cl.genericParams.map(_._1).map(genericReplace.replaceGenerics(_))), genericReplace.replaceGenerics(retCons))
       }
+      case Cast(casttype, expr) => {
+        val (rty, cons) = TYPEExpr(expr, localVars, ast)
+        (casttype, cons)
+      }
     }
 
     private def findMethods(m: String, numParams: Int, ast: List[Class]) =

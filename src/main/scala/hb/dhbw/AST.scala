@@ -13,6 +13,7 @@ final case class LocalVar(x: String) extends Expr
 final case class FieldVar(e: Expr, f: String) extends Expr
 final case class MethodCall(e: Expr, name: String, params: List[Expr]) extends Expr
 final case class Constructor(className: String, params: List[Expr]) extends Expr
+final case class Cast(to: Type, expr: Expr) extends Expr
 
 object ASTBuilder {
   def fromParseTree(toAst: List[ParserClass]) = new ASTBuilderMonad().fromParseTree(toAst)
@@ -27,8 +28,16 @@ object ASTBuilder {
         nTypeToType(c.superType, genericNames).asInstanceOf[RefType],
         c.fields.map(f => (nTypeToType(f._1, genericNames),f._2)), c.methods.map(m => Method(List(), freshTPV(), m.name,
           m.params.map(p => (p._1.map(it => nTypeToType(it, genericNames)).getOrElse(freshTPV()), p._2)),
-          m.retExpr)))
+          fromParseExpr(m.retExpr, genericNames))))
     })
+
+    def fromParseExpr(from: ParserExpr, genericNames: Set[String]): Expr = from match{
+      case PMethodCall(e, name, params) => MethodCall(fromParseExpr(e, genericNames), name, params.map(fromParseExpr(_, genericNames)))
+      case PConstructor(className, params) => Constructor(className, params.map(fromParseExpr(_, genericNames)))
+      case PFieldVar(e, f) => FieldVar(fromParseExpr(e, genericNames), f)
+      case PCast(ntype, e) => Cast(nTypeToType(ntype, genericNames), fromParseExpr(e, genericNames))
+      case PLocalVar(n) => LocalVar(n)
+    }
 
     private def freshTPV() = {
       def numToLetter(num: Int) = {
