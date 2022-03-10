@@ -33,7 +33,15 @@ object InsertTypes {
   }
 
   def applyResult(sigma: Map[String, Type], generics: Set[(Type, Type)], into: Class): Class = {
-    //TODO
+    def applySigma(t: Type): Type = t match{
+      case RefType(n, params) => RefType(n, params.map(applySigma))
+      case TypeVariable(name) => sigma(name)
+      case GenericType(name) => GenericType(name)
+    }
+    val newMethods = into.methods.map(m => {
+      Method(m.genericParams, applySigma(m.retType), m.name, m.params.map(p => (applySigma(p._1), p._2)), m.retExpr)
+    })
+    Class(into.name, into.genericParams, into.superType, into.fields, newMethods)
   }
 
   def insert(unifyResult: Set[Set[UnifyConstraint]], into: Class): Class = {
