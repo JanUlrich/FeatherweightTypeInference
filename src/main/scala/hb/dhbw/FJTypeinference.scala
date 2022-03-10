@@ -78,6 +78,11 @@ object FJTypeinference {
     Class(in.name, in.genericParams, in.superType, in.fields, newMethods.toList)
   }
 
+  def sigmaReplace(sigma:Map[String, Type], unifyType: UnifyType): Type = unifyType match {
+    case UnifyRefType(n, ps) => RefType(n, ps.map(it => sigmaReplace(sigma, it)))
+    case UnifyTV(a) => sigma(a)
+  }
+
   def typeinference(str: String): Either[String, (Set[Set[UnifyConstraint]], List[Class])] = {
     val ast = Parser.parse(str).map(ASTBuilder.fromParseTree(_))
     var typedClasses: List[Class] = List()
@@ -87,8 +92,26 @@ object FJTypeinference {
         val newClassList = cOld :+ c
         val typeResult = TYPE.generateConstraints(newClassList, generateFC(newClassList))
         val unifyResult = Unify.unifyIterative(convertOrConstraints(typeResult._1), typeResult._2)
+        // Unify step 6:
+        val genericNames = c.genericParams.map(_._1).map(_ match{case GenericType(x) => x})
+        val sigma = unifyResult.map(result => {
+          val lessdotSigma = result.filter(_ match {
+            case UnifyLessDot(UnifyTV(a), _) => true
+            case _ => false
+          }).map(_ match{
+            case UnifyLessDot(UnifyTV(a), UnifyRefType(n, _)) =>
+              if (genericNames.find(_ == n).isDefined) (a -> GenericType(n)) else (a -> GenericType(a))
+          }).toMap[String, Type]
+          val eqDotSigma = result.map(_ match{
+            case UnifyEqualsDot(UnifyTV(a), toRefType) => (a -> sigmaReplace(lessdotSigma, toRefType))
+            case UnifyLessDot(UnifyTV(a), UnifyRefType(n, p)) => (a -> GenericType(a))
+          }).toMap
+          //merge the two maps:
+          lessdotSigma ++ eqDotSigma
+        }).toList.head
+        val generics:Set[(Type, Type)] = Set()
         //Insert intersection types
-        val typeInsertedC = InsertTypes.insert(unifyResult, c)
+        val typeInsertedC = InsertTypes.applyResult(sigma, generics, c)//InsertTypes.insert(unifyResult, c)
         typedClasses = typedClasses :+ typeInsertedC
         unifyResults = unifyResults + unifyResult
         cOld :+ typeInsertedC

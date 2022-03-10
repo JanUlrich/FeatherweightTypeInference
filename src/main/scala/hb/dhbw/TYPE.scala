@@ -73,8 +73,9 @@ object TYPE {
         val es = params.map(ex => TYPEExpr(ex, localVars, ast))
         val methods = findMethods(name, es.size, ast)
         val consM = methods.map(m => AndConstraint(m._2.genericParams ++
-          List(EqualsDot(rty, cToType(m._1)), EqualsDot(a, m._2.retType))
+          List(LessDot(rty, cToType(m._1)), EqualsDot(a, m._2.retType))
           ++ m._2.params.map(_._1).zip(es.map(_._1)).map(a => LessDot(a._2, a._1))
+          ++ m._1.genericParams.map(it => LessDot(it._1, it._2))
         ))
         val retCons = (cons ++ es.flatMap(_._2) ++ List(OrConstraint(consM)))
         (a, genericReplace.replaceGenerics(retCons))

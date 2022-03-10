@@ -32,6 +32,9 @@ object InsertTypes {
     ret ++ alessdotB.map(cons => UnifyEqualsDot(cons.left, cons.right))
   }
 
+  def applyResult(sigma: Map[String, Type], generics: Set[(Type, Type)], into: Class): Class = {
+    //TODO
+  }
 
   def insert(unifyResult: Set[Set[UnifyConstraint]], into: Class): Class = {
 
