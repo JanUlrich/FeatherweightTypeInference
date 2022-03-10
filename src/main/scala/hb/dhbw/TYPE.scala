@@ -52,7 +52,8 @@ object TYPE {
 
     private def TYPEMethod(method: Method, thisType: RefType, ast: List[Class]) = {
       val (rty, cons) = TYPEExpr(method.retExpr, List((thisType, "this")) ++ method.params, ast)
-      LessDot(rty, method.retType) :: cons
+      LessDot(rty, method.retType) :: LessDot(method.retType, RefType("Object", List())) ::
+        cons ++ method.params.map(_._1).map(LessDot(_, RefType("Object", List())))
     }
 
     private def TYPEExpr(expr: Expr, localVars: List[(Type, String)], ast: List[Class]) : (Type, List[Constraint]) =expr match {
