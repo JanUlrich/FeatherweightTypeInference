@@ -20,18 +20,6 @@ final case class AEqualsB(a: TypeVariable, b: TypeVariable) extends UnifyResultC
 final case class AEqualsN(a: TypeVariable, n: ResultRefType) extends UnifyResultConstraint
 */
 
-class UnifyResult(solvedCons: Set[UnifyConstraint]){
-  def sigma(x: UnifyType): UnifyType = {
-    assert(x.isInstanceOf[UnifyTV])
-    val to = solvedCons.find(_.left == x).get
-    to match {
-      case UnifyEqualsDot(_, UnifyTV(x)) => this.sigma(UnifyTV(x))
-      case UnifyEqualsDot(_, UnifyRefType(n, ps)) => UnifyRefType(n, ps.map(this.sigma(_)))
-      case UnifyLessDot(UnifyTV(x), UnifyRefType(n, ps)) => UnifyTV(x)
-    }
-  }
-}
-
 object Unify {
 
   sealed trait Step4Result{

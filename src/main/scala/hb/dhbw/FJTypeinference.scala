@@ -83,46 +83,21 @@ object FJTypeinference {
     case UnifyTV(a) => sigma(a)
   }
 
-  def typeinference(str: String): Either[String, (Set[Set[UnifyConstraint]], List[Class])] = {
+  def typeinference(str: String): Either[String, List[Class]] = {
     val ast = Parser.parse(str).map(ASTBuilder.fromParseTree(_))
     var typedClasses: List[Class] = List()
-    val typeResult = ast.map(ast => {
-      var unifyResults = Set[Set[Set[UnifyConstraint]]]()
+    ast.map(ast => {
       ast.foldLeft(List[Class]())((cOld, c) => {
         val newClassList = cOld :+ c
         val typeResult = TYPE.generateConstraints(newClassList, generateFC(newClassList))
         val unifyResult = Unify.unifyIterative(convertOrConstraints(typeResult._1), typeResult._2)
-        // Unify step 6:
-        val genericNames = c.genericParams.map(_._1).map(_ match{case GenericType(x) => x})
-        val sigma = unifyResult.map(result => {
-          val lessdotSigma = result.filter(_ match {
-            case UnifyLessDot(UnifyTV(a), _) => true
-            case _ => false
-          }).map(_ match{
-            case UnifyLessDot(UnifyTV(a), UnifyRefType(n, _)) =>
-              if (genericNames.find(_ == n).isDefined) (a -> GenericType(n)) else (a -> GenericType(a))
-          }).toMap[String, Type]
-          val eqDotSigma = result.map(_ match{
-            case UnifyEqualsDot(UnifyTV(a), toRefType) => (a -> sigmaReplace(lessdotSigma, toRefType))
-            case UnifyLessDot(UnifyTV(a), UnifyRefType(n, p)) => (a -> GenericType(a))
-          }).toMap
-          //merge the two maps:
-          lessdotSigma ++ eqDotSigma
-        }).toList.head
-        val generics:Set[(Type, Type)] = Set()
+
         //Insert intersection types
-        val typeInsertedC = InsertTypes.applyResult(sigma, generics, c)//InsertTypes.insert(unifyResult, c)
+        //val typeInsertedC = InsertTypes.applyResult(sigma, generics, c)//InsertTypes.insert(unifyResult, c)
+        val typeInsertedC = InsertTypes.applyUnifyResult(unifyResult, c)
         typedClasses = typedClasses :+ typeInsertedC
-        unifyResults = unifyResults + unifyResult
         cOld :+ typeInsertedC
       })
-      unifyResults
     })
-    val fc = generateFC(typedClasses)
-    typedClasses =
-    typedClasses.map(cl => {
-      removeOverloadedSubtypeMethods(cl, fc)
-    })
-    typeResult.map(it => (it.flatten, typedClasses))
   }
 }

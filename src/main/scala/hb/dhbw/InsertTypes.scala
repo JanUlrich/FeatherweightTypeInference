@@ -2,6 +2,45 @@ package hb.dhbw
 
 object InsertTypes {
 
+
+  // Unify step 6:
+  //TODO: a <. X must be replaced by X -> sigma(a) = GenericType(X) in that case
+  private class UnifyResult(solvedCons: Set[UnifyConstraint]){
+    def sigma(x: Type): Type = x match {
+      case TypeVariable(n) => sigma(UnifyTV(x.asInstanceOf[TypeVariable].name))
+      case v => v
+    }
+    def sigma(x: UnifyType): Type = { x match {
+        case UnifyTV(n) => {
+          val to = solvedCons.find(_.left == x).get
+          to match {
+            case UnifyEqualsDot(UnifyTV(_), UnifyTV(x)) => this.sigma(UnifyTV(x))
+            case UnifyEqualsDot(UnifyTV(_), UnifyRefType(n, ps)) => RefType(n, ps.map(this.sigma(_)))
+            case UnifyLessDot(UnifyTV(x), UnifyRefType(n, ps)) => GenericType(x)
+          }
+        }
+        case UnifyRefType(n, ps) => RefType(n, ps.map(sigma))
+      }
+
+    }
+
+    def delta() = {
+      solvedCons.collect{
+        case UnifyLessDot(UnifyTV(a), UnifyRefType(n, ps)) => LessDot(GenericType(a), RefType(n, ps.map(sigma)))
+      }.toList
+    }
+  }
+
+  def applyUnifyResult(eq: Set[Set[UnifyConstraint]], into: Class) = {
+    val newMethods = into.methods.flatMap(m => {
+      eq.map(req => {
+        val result = new UnifyResult(req)
+        Method(result.delta(), result.sigma(m.retType), m.name, m.params.map(p => (result.sigma(p._1), p._2)), m.retExpr)
+      })
+    })
+    Class(into.name, into.genericParams, into.superType, into.fields, newMethods)
+  }
+
   /**
    * Remove a <. b constraints
    * @param eq
