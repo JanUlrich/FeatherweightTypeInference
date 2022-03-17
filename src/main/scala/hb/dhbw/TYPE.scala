@@ -52,7 +52,8 @@ object TYPE {
 
     private def TYPEMethod(method: Method, thisType: RefType, ast: List[Class]) = {
       val (rty, cons) = TYPEExpr(method.retExpr, List((thisType, "this")) ++ method.params, ast)
-      LessDot(rty, method.retType) :: cons
+      LessDot(rty, method.retType) :: LessDot(method.retType, RefType("Object", List())) ::
+        cons ++ method.params.map(_._1).map(LessDot(_, RefType("Object", List())))
     }
 
     private def TYPEExpr(expr: Expr, localVars: List[(Type, String)], ast: List[Class]) : (Type, List[Constraint]) =expr match {
@@ -73,8 +74,9 @@ object TYPE {
         val es = params.map(ex => TYPEExpr(ex, localVars, ast))
         val methods = findMethods(name, es.size, ast)
         val consM = methods.map(m => AndConstraint(m._2.genericParams ++
-          List(EqualsDot(rty, cToType(m._1)), EqualsDot(a, m._2.retType))
+          List(LessDot(rty, cToType(m._1)), EqualsDot(a, m._2.retType))
           ++ m._2.params.map(_._1).zip(es.map(_._1)).map(a => LessDot(a._2, a._1))
+          ++ m._1.genericParams.map(it => LessDot(it._1, it._2))
         ))
         val retCons = (cons ++ es.flatMap(_._2) ++ List(OrConstraint(consM)))
         (a, genericReplace.replaceGenerics(retCons))
@@ -87,6 +89,10 @@ object TYPE {
         val retCons = paramCons ++ es.flatMap(_._2) ++
           cl.genericParams.map(gp => LessDot(gp._1, gp._2))
         (RefType(className, cl.genericParams.map(_._1).map(genericReplace.replaceGenerics(_))), genericReplace.replaceGenerics(retCons))
+      }
+      case Cast(casttype, expr) => {
+        val (rty, cons) = TYPEExpr(expr, localVars, ast)
+        (casttype, cons)
       }
     }
 

@@ -20,7 +20,6 @@ class HLJSResult extends js.Object{
 }
 
 object Main {
-
   def main(args: Array[String]): Unit = {
     val source = document.querySelector("#fj-input")
     update(source.textContent)
@@ -35,19 +34,14 @@ object Main {
   }
 
   def update(str: String): Unit = {
-    val target = document.querySelector("#unify-output")
     val tiResult = FJTypeinference.typeinference(str)
-    target.innerHTML = tiResult.fold(
-      (error) => error,
-      (result) => prettyPrintHTML(result._1)
-    )
     val astOutput = document.querySelector("#ast-output")
     astOutput.innerHTML = tiResult.fold(
       (error) => Parser.parse(str).map( parseTree =>
         hljs.highlightAuto(prettyPrintAST(ASTBuilder.fromParseTree(parseTree))).value
       ).merge,
       (result) => {
-          hljs.highlightAuto(prettyPrintAST(result._2)).value
+          hljs.highlightAuto(prettyPrintAST(result)).value
       }
     )
 
