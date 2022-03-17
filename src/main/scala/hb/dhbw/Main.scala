@@ -22,7 +22,7 @@ class HLJSResult extends js.Object{
 object Main {
   def main(args: Array[String]): Unit = {
     val source = document.querySelector("#fj-input")
-    //update(source.textContent)
+    update(source.textContent)
     source.addEventListener("input", typecheck)
   }
   @JSExportTopLevel("typecheck")
