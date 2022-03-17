@@ -35,6 +35,24 @@ object Unify {
     override def result: Set[UnifyConstraint] = eq
   }
 
+  def removeALessdotB(eq: Set[UnifyConstraint]): Set[UnifyConstraint] = {
+    var ret = eq
+    val alessdotb:Set[UnifyConstraint] = eq.filter(_ match{
+      case UnifyLessDot(UnifyTV(a), UnifyTV(b)) => true
+      case _ => false
+    })
+    ret = ret.filter(it => !alessdotb.contains(it))
+    alessdotb.foreach(it => ret = subst(it.left.asInstanceOf[UnifyTV], it.right, ret))
+    /*
+    .filter(_ match{
+      case UnifyEqualsDot(UnifyTV(a), UnifyTV(b)) => a != b
+      case UnifyLessDot(UnifyTV(_), UnifyTV(_)) => false
+      case _ => true
+    })
+     */
+    ret ++ alessdotb.map(_ match {case UnifyLessDot(a, b) => UnifyEqualsDot(a,b)})
+  }
+
   def unifyIterative(orCons: Set[Set[Set[UnifyConstraint]]], fc: FiniteClosure) : Set[Set[UnifyConstraint]] = {
     def getNext[A](from: Set[CartesianProduct[A]])=
       from.find(_.hasNext()).map(it => it.nextProduct())
@@ -51,7 +69,7 @@ object Unify {
         val substResult = substStep(step2Result.nextProduct().flatten)
         substResult match{
           case UnchangedSet(eq) => if(isSolvedForm(eq)){
-            results = results + eq
+            results = results + removeALessdotB(eq)
           }
           case ChangedSet(eq) =>
             eqSets = eqSets + new CartesianProduct[Set[UnifyConstraint]](Set(Set(eq)))

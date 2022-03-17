@@ -78,28 +78,26 @@ object FJTypeinference {
     Class(in.name, in.genericParams, in.superType, in.fields, newMethods.toList)
   }
 
-  def typeinference(str: String): Either[String, (Set[Set[UnifyConstraint]], List[Class])] = {
+  def sigmaReplace(sigma:Map[String, Type], unifyType: UnifyType): Type = unifyType match {
+    case UnifyRefType(n, ps) => RefType(n, ps.map(it => sigmaReplace(sigma, it)))
+    case UnifyTV(a) => sigma(a)
+  }
+
+  def typeinference(str: String): Either[String, List[Class]] = {
     val ast = Parser.parse(str).map(ASTBuilder.fromParseTree(_))
     var typedClasses: List[Class] = List()
-    val typeResult = ast.map(ast => {
-      var unifyResults = Set[Set[Set[UnifyConstraint]]]()
+    ast.map(ast => {
       ast.foldLeft(List[Class]())((cOld, c) => {
         val newClassList = cOld :+ c
         val typeResult = TYPE.generateConstraints(newClassList, generateFC(newClassList))
         val unifyResult = Unify.unifyIterative(convertOrConstraints(typeResult._1), typeResult._2)
+
         //Insert intersection types
-        val typeInsertedC = InsertTypes.insert(unifyResult, c)
+        //val typeInsertedC = InsertTypes.applyResult(sigma, generics, c)//InsertTypes.insert(unifyResult, c)
+        val typeInsertedC = InsertTypes.applyUnifyResult(unifyResult, c)
         typedClasses = typedClasses :+ typeInsertedC
-        unifyResults = unifyResults + unifyResult
         cOld :+ typeInsertedC
       })
-      unifyResults
     })
-    val fc = generateFC(typedClasses)
-    typedClasses =
-    typedClasses.map(cl => {
-      removeOverloadedSubtypeMethods(cl, fc)
-    })
-    typeResult.map(it => (it.flatten, typedClasses))
   }
 }
