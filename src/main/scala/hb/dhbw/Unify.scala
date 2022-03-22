@@ -57,22 +57,18 @@ object Unify {
     def getNext[A](from: Set[CartesianProduct[A]])=
       from.find(_.hasNext()).map(it => it.nextProduct())
 
-    var eqSets: Set[CartesianProduct[Set[UnifyConstraint]]] =
+    val eqSets: Set[CartesianProduct[Set[UnifyConstraint]]] =
       Set(new CartesianProduct[Set[UnifyConstraint]](orCons))
     var it: Option[Set[Set[UnifyConstraint]]] = getNext(eqSets)
     var results: Set[Set[UnifyConstraint]] = Set()
     while(it.isDefined){
       val eqSet = it.get
-      val rulesResult = applyRules(fc)(eqSet.flatten)
+      val rulesResult = applyRules(fc, eqSet.flatten)
       val step2Result = step2(rulesResult, fc)
       while(step2Result.hasNext()){
-        val substResult = substStep(step2Result.nextProduct().flatten)
-        substResult match{
-          case UnchangedSet(eq) => if(isSolvedForm(eq)){
-            results = results + removeALessdotB(eq)
-          }
-          case ChangedSet(eq) =>
-            eqSets = eqSets + new CartesianProduct[Set[UnifyConstraint]](Set(Set(eq)))
+        val substResult = step2Result.nextProduct().flatten
+        if(isSolvedForm(substResult)){
+            results = results + removeALessdotB(substResult)
         }
       }
       it = getNext(eqSets)
@@ -155,6 +151,10 @@ object Unify {
     case UnifyLessDot(UnifyTV(_), UnifyRefType(_,_)) => true
     case _ => false
   }).asInstanceOf[Set[UnifyLessDot]]
+  private def getCUnifyLessDotA(from: Set[UnifyConstraint]) = from.filter(c => c match{
+    case UnifyLessDot(UnifyRefType(_, _), UnifyTV(_)) => true
+    case _ => false
+  }).asInstanceOf[Set[UnifyLessDot]]
 
   def matchRule(eq : Set[UnifyConstraint], fc: FiniteClosure) = {
     val aUnifyLessDotC = getAUnifyLessDotC(eq)
@@ -164,6 +164,18 @@ object Unify {
         c
       }else{
         UnifyLessDot(smallerC.get.right, c.right)
+      }
+    }
+    )
+  }
+  def match2Rule(eq : Set[UnifyConstraint], fc: FiniteClosure) = {
+    val cUnifyLessDotA = getCUnifyLessDotA(eq) //C <. a
+    (eq -- cUnifyLessDotA) ++ cUnifyLessDotA.map(c => {
+      val smallerA = cUnifyLessDotA.find(c2 => c2 != c && c2.right.equals(c.right) && fc.isPossibleSupertype(c.left.asInstanceOf[UnifyRefType].name,c2.left.asInstanceOf[UnifyRefType].name))
+      if(smallerA.isEmpty){ //c2 = smallerA = D <. a  C < D
+        c
+      }else{
+        UnifyLessDot(c.left, smallerA.get.left) // C <. D
       }
     }
     )
@@ -208,7 +220,6 @@ object Unify {
       case x => x
     })
   }
-
   def adoptRule(eq: Set[UnifyConstraint], fc: FiniteClosure) ={
     val aUnifyLessDota = eq.filter(c => c match{
       case UnifyLessDot(UnifyTV(_), UnifyTV(_)) => true
@@ -218,11 +229,29 @@ object Unify {
     (eq -- aUnifyLessDotC) ++ aUnifyLessDotC.map(c => {
       val smallerC = aUnifyLessDotC.find(c2 => c2 != c
         && isLinked(c2.left.asInstanceOf[UnifyTV], c.left.asInstanceOf[UnifyTV], aUnifyLessDota)
-      && fc.isPossibleSupertype(c2.right.asInstanceOf[UnifyRefType].name,c.right.asInstanceOf[UnifyRefType].name))
+        && fc.isPossibleSupertype(c2.right.asInstanceOf[UnifyRefType].name,c.right.asInstanceOf[UnifyRefType].name))
       if(smallerC.isEmpty){
         c
       }else{
         UnifyLessDot(smallerC.get.right, c.right)
+      }
+    }
+    )
+  }
+  def adopt2Rule(eq: Set[UnifyConstraint], fc: FiniteClosure) = {
+    val aUnifyLessDota = eq.filter(c => c match{
+      case UnifyLessDot(UnifyTV(_), UnifyTV(_)) => true
+      case _ => false
+    }).asInstanceOf[Set[UnifyLessDot]]
+    val cUnifyLessDotA = getCUnifyLessDotA(eq)
+    (eq -- cUnifyLessDotA) ++ cUnifyLessDotA.map(c => {
+      val smallerA = cUnifyLessDotA.find(c2 => c2 != c
+        && isLinked(c2.right.asInstanceOf[UnifyTV], c.right.asInstanceOf[UnifyTV], aUnifyLessDota)
+      && fc.isPossibleSupertype(c.left.asInstanceOf[UnifyRefType].name,c2.left.asInstanceOf[UnifyRefType].name))
+      if(smallerA.isEmpty){
+        c
+      }else{
+        UnifyLessDot(c.left, smallerA.get.left)
       }
     }
     )
@@ -350,14 +379,18 @@ object Unify {
   private def doWhileSome(fun: Set[UnifyConstraint]=>Option[Set[UnifyConstraint]], eqTemp: Set[UnifyConstraint]): Set[UnifyConstraint] =
     fun(eqTemp).map(eqTemp2 => doWhileSome(fun,eqTemp2)).getOrElse(eqTemp)
 
-  def applyRules(fc: FiniteClosure) = (eq: Set[UnifyConstraint]) => {
+  def applyRules(fc: FiniteClosure, eq: Set[UnifyConstraint]): Set[UnifyConstraint] = {
     var eqNew: Set[UnifyConstraint] = null
     var eqFinish: Set[UnifyConstraint] = eq
     do{
       eqNew = doWhileSome(Unify.equalsRule,eqFinish) //We have to apply equals rule first, to get rid of circles
-      eqFinish = eraseRule(swapRule(reduceRule(matchRule(adoptRule(adaptRule(eqNew, fc), fc), fc))))
+      eqFinish = eraseRule(swapRule(reduceRule(match2Rule(matchRule(adopt2Rule(adoptRule(adaptRule(eqNew, fc), fc), fc), fc), fc))))
     }while(!eqNew.equals(eqFinish))
-    eqNew
+    val substResult = substStep(eqNew)
+    substResult match{
+      case UnchangedSet(_) => substResult.result
+      case ChangedSet(_) => applyRules(fc, substResult.result)
+    }
   }
 
   def cartesianProduct[T](xss: Set[Set[T]]): Set[Set[T]] =
