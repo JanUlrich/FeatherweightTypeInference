@@ -43,13 +43,6 @@ object Unify {
     })
     ret = ret.filter(it => !alessdotb.contains(it))
     alessdotb.foreach(it => ret = subst(it.left.asInstanceOf[UnifyTV], it.right, ret))
-    /*
-    .filter(_ match{
-      case UnifyEqualsDot(UnifyTV(a), UnifyTV(b)) => a != b
-      case UnifyLessDot(UnifyTV(_), UnifyTV(_)) => false
-      case _ => true
-    })
-     */
     ret ++ alessdotb.map(_ match {case UnifyLessDot(a, b) => UnifyEqualsDot(a,b)})
   }
 
@@ -80,25 +73,6 @@ object Unify {
     results
   }
 
-  /*
-  def unify(orCons: Set[Set[Set[UnifyConstraint]]], fc: FiniteClosure) : Set[Set[UnifyConstraint]] = {
-    val eqSets = cartesianProduct(orCons)
-    val step2Results = eqSets.flatMap(eqSet => {
-      val rulesResult = applyRules(fc)(eqSet.flatten)
-      step2(rulesResult, fc)
-    })
-    step2Results.flatMap(eqSet => {
-      val (substResult, unifier) = substStep(eqSet)
-      if(!unifier.isDefined){
-        if(isSolvedForm(substResult))
-          Set(substResult)
-        else Set()
-      }else{
-        unify(Set(Set(substResult)), fc).map(s => s + unifier.get)
-      }
-    })
-  }
-*/
   def step2(eq : Set[UnifyConstraint], fc: FiniteClosure) ={
     val eq1 = eq.filter(c => c match{
       case UnifyLessDot(UnifyTV(_), UnifyTV(_)) => true

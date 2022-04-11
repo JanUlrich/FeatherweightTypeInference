@@ -22,7 +22,7 @@ class IntegrationTest extends FunSuite {
 
   test("ListAddDefinition"){
     val result = FJTypeinference.typeinference("class List<A extends Object> extends Object{\n  add(a){\n  return this;\n}\n}")
-    println(result)
+    println(result.map(Main.prettyPrintAST(_)))
   }
   /*
   test("PaperExample"){

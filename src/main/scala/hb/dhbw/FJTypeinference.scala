@@ -41,26 +41,23 @@ object FJTypeinference {
   ).map(it => (convertRefType(it._1), convertRefType(it._2))).toSet)
   private def cToUnifyType(c: Class): UnifyRefType = UnifyRefType(c.name, c.genericParams.map(it => convertType(it._1)))
 
+  /*
+  Die generics sind für alle Methoden die gleichen. Falls dies der Fall ist, kann man einfach nach Sub typen in den Parametern und return-Typ filtern
+   */
   private def removeOverloadedSubtypeMethods(in: Class, finiteClosure: FiniteClosure) = {
     def convertToFJType(in: Type): FJNamedType = in match {
       case GenericType(name) => FJNamedType(name, List())
       case RefType(n, p) => FJNamedType(n,p.map(convertToFJType))
     }
     def methodIsSupertype(m : Method, superMethod: Method) = {
-      def getBound(t: Type): Type = t match {
-        case GenericType(x) =>
-          (in.genericParams ++ m.genericParams.map(c => (c.asInstanceOf[LessDot].l, c.asInstanceOf[LessDot].r)))
-          .find(p => p._1.equals(GenericType(x))).map(_._2).map(getBound).get
-        case x => x
-      }
-      if(m.params.size != superMethod.params.size){
-        false
-      }else{
-        val returnIsSub = finiteClosure.aIsSubtypeOfb(convertToFJType(getBound(m.retType)), convertToFJType(getBound(superMethod.retType)))
+      if(m.genericParams.equals(superMethod.genericParams)) {
+        val returnIsSub = finiteClosure.aIsSubtypeOfb(convertToFJType(m.retType), convertToFJType(superMethod.retType))
         val paramsAreSup = m.params.zip(superMethod.params).foldLeft(true)((isSub, m2) => {
-          isSub && finiteClosure.aIsSubtypeOfb(convertToFJType(getBound(m2._2._1)), convertToFJType(getBound(m2._1._1)))
+          isSub && finiteClosure.aIsSubtypeOfb(convertToFJType(m2._2._1), convertToFJType(m2._1._1))
         })
         returnIsSub && paramsAreSup
+      }else{
+        false
       }
     }
 
@@ -78,23 +75,19 @@ object FJTypeinference {
     Class(in.name, in.genericParams, in.superType, in.fields, newMethods.toList)
   }
 
-  def sigmaReplace(sigma:Map[String, Type], unifyType: UnifyType): Type = unifyType match {
-    case UnifyRefType(n, ps) => RefType(n, ps.map(it => sigmaReplace(sigma, it)))
-    case UnifyTV(a) => sigma(a)
-  }
-
   def typeinference(str: String): Either[String, List[Class]] = {
     val ast = Parser.parse(str).map(ASTBuilder.fromParseTree(_))
     var typedClasses: List[Class] = List()
     ast.map(ast => {
       ast.foldLeft(List[Class]())((cOld, c) => {
         val newClassList = cOld :+ c
-        val typeResult = TYPE.generateConstraints(newClassList, generateFC(newClassList))
+        val fc = generateFC(newClassList)
+        val typeResult = TYPE.generateConstraints(newClassList, fc)
         val unifyResult = Unify.unifyIterative(convertOrConstraints(typeResult._1), typeResult._2)
 
         //Insert intersection types
         //val typeInsertedC = InsertTypes.applyResult(sigma, generics, c)//InsertTypes.insert(unifyResult, c)
-        val typeInsertedC = InsertTypes.applyUnifyResult(unifyResult, c)
+        val typeInsertedC = removeOverloadedSubtypeMethods(InsertTypes.applyUnifyResult(unifyResult, c), fc)
         typedClasses = typedClasses :+ typeInsertedC
         cOld :+ typeInsertedC
       })

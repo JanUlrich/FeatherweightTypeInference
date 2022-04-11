@@ -108,22 +108,6 @@ object InsertTypes {
 
     val constraints = flatted.map(_.map(refTypeInConsToGenerics(_)))
 
-    /*
-
-    def extractTVNames(unifyType: UnifyType): Set[String] = unifyType match {
-      case UnifyTV(name) => Set(name)
-      case UnifyRefType(_, params) => params.flatMap(extractTVNames(_)).toSet
-    }
-
-    val genericNames:Set[String] = into.genericParams.map(_._1).flatMap(_ match {
-      case GenericType(name) => Some(name)
-      case _ => None
-    }).toSet ++ unifyResult.flatMap(_.flatMap(_ match{
-      case UnifyLessDot(a,b) => Set(a, b)
-      case UnifyEqualsDot(a,b) => Set(a,b)
-    })).flatMap(extractTVNames(_))
-    val constraints = normalized.map(_.map(replaceRefTypeWithGeneric(_, genericNames)))
- */
     val newMethods = into.methods.flatMap(m => constraints.map(cons => insert(cons, m)))
     Class(into.name, into.genericParams, into.superType, into.fields, newMethods)
   }
