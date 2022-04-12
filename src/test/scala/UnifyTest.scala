@@ -1,5 +1,5 @@
 
-import hb.dhbw.{FiniteClosure, RefType, TypeVariable, Unify, UnifyEqualsDot, UnifyLessDot, UnifyRefType, UnifyTV}
+import hb.dhbw.{FiniteClosure, RefType, TypeVariable, Unify, UnifyConstraint, UnifyEqualsDot, UnifyLessDot, UnifyRefType, UnifyTV}
 import org.scalatest.FunSuite
 
 class UnifyTest extends FunSuite {
@@ -9,6 +9,13 @@ class UnifyTest extends FunSuite {
 
   val fc = new FiniteClosure(Set())
 
+  test("sub-elim rule"){
+    val input : Set[UnifyConstraint] = Set(UnifyLessDot(UnifyTV("a"), UnifyTV("b")), UnifyEqualsDot(UnifyTV("a"), UnifyRefType("a", List())))
+    val result = Unify.removeALessdotB(input)
+    println(result)
+    assert(result.contains(UnifyEqualsDot(UnifyTV("a"), UnifyTV("b"))))
+    assert(result.contains(UnifyEqualsDot(UnifyTV("b"), UnifyTV("a"))))
+  }
 
   /*
   test("Unify.step2") {

@@ -31,8 +31,12 @@ object Unify {
       case _ => false
     })
     ret = ret.filter(it => !alessdotb.contains(it))
-    alessdotb.foreach(it => ret = subst(it.left.asInstanceOf[UnifyTV], it.right, ret))
-    ret ++ alessdotb.map(_ match {case UnifyLessDot(a, b) => UnifyEqualsDot(a,b)})
+    var newADotEqB : Set[UnifyConstraint] = Set()
+    alessdotb.foreach(it => {
+      ret = subst(it.left.asInstanceOf[UnifyTV], it.right, ret)
+      newADotEqB = newADotEqB ++ Set(UnifyEqualsDot(it.right, it.left))
+    })
+    ret ++ alessdotb.map(_ match {case UnifyLessDot(a, b) => UnifyEqualsDot(a,b)}) ++ newADotEqB
   }
 
   def unifyIterative(orCons: Set[Set[Set[UnifyConstraint]]], fc: FiniteClosure) : Set[Set[UnifyConstraint]] = {
