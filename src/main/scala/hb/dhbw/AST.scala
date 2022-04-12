@@ -14,6 +14,7 @@ final case class FieldVar(e: Expr, f: String) extends Expr
 final case class MethodCall(e: Expr, name: String, params: List[Expr]) extends Expr
 final case class Constructor(className: String, params: List[Expr]) extends Expr
 final case class Cast(to: Type, expr: Expr) extends Expr
+final case class Lambda(p: String, expr: Expr) extends Expr
 
 object ASTBuilder {
   def fromParseTree(toAst: List[ParserClass]) = new ASTBuilderMonad().fromParseTree(toAst)
@@ -37,6 +38,7 @@ object ASTBuilder {
       case PFieldVar(e, f) => FieldVar(fromParseExpr(e, genericNames), f)
       case PCast(ntype, e) => Cast(nTypeToType(ntype, genericNames), fromParseExpr(e, genericNames))
       case PLocalVar(n) => LocalVar(n)
+      case PLambda(p, e) => Lambda(p, fromParseExpr(e, genericNames))
     }
 
     private def freshTPV() = {

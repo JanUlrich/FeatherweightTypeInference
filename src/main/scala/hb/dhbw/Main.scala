@@ -53,6 +53,7 @@ object Main {
       case FieldVar(e, f) => prettyPrintExpr(e)+"."+f
       case MethodCall(e, name, params) => prettyPrintExpr(e)+"."+name+"("+params.map(prettyPrintExpr(_)).mkString(", ")+")"
       case Constructor(className, params) => "new "+className+"(" + params.map(prettyPrintExpr(_)).mkString(", ") +")"
+      case Lambda(a, expr) => "(" + a + ") -> " + prettyPrintExpr(expr)
     }
     def prettyPrintType(l: Type): String = l match {
       case RefType(name, List()) => name

@@ -12,6 +12,7 @@ final case class PFieldVar(e: ParserExpr, f: String) extends ParserExpr
 final case class PMethodCall(e: ParserExpr, name: String, params: List[ParserExpr]) extends ParserExpr
 final case class PConstructor(className: String, params: List[ParserExpr]) extends ParserExpr
 final case class PCast(to: NType, expr: ParserExpr) extends ParserExpr
+final case class PLambda(param: String, expr: ParserExpr) extends ParserExpr
 
 final case class NType(name: String, params: List[NType])
 
@@ -35,13 +36,15 @@ object Parser {
     .map(ite => ite._2.map(params => params._1 :: params._2).getOrElse(List.empty))
   def variable[_: P]: P[ParserExpr] = P(ident).map(PLocalVar)
   def cast[_: P]: P[ParserExpr] = P("(" ~ typeParser ~ ")" ~ expr).map(x => PCast(x._1, x._2))
-  def expr[_: P]: P[ParserExpr] = P( (variable | constructor | cast)~ (prefixMethodCall | fieldVar).rep.map(_.toList) )
+  def expr[_: P]: P[ParserExpr] = P( (variable | lambdaExpr | constructor | cast)~ (prefixMethodCall | fieldVar).rep.map(_.toList) )
     .map(ite => ite._2.foldLeft(ite._1) { (e1 : ParserExpr, e2 : ParserExpr) =>
       e2 match{
         case PMethodCall(_, name, e3) => PMethodCall(e1, name, e3)
         case PFieldVar(_, name) => PFieldVar(e1, name)
       }
     })
+
+  def lambdaExpr[_: P]: P[PLambda] = P( "(" ~ ident ~ ")" ~ "->" ~ expr).map(it => PLambda(it._1, it._2))
 
   def constructor[_: P]: P[ParserExpr] = P( kw("new") ~ methodCall).map(m => PConstructor(m.name,m.params))
 

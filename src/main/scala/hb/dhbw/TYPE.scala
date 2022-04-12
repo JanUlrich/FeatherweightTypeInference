@@ -94,6 +94,14 @@ object TYPE {
         val (rty, cons) = TYPEExpr(expr, localVars, ast)
         (casttype, cons)
       }
+      case Lambda(p, expr) => {
+        val t = freshTPV()
+        val a = freshTPV()
+        val b = freshTPV()
+        val typeRet = TYPEExpr(expr, (t, p) :: localVars, ast)
+        val cons = typeRet._2 ++ List(LessDot(t, a), LessDot(typeRet._1, b))
+        (RefType("Function", List(a, b)), cons)
+      }
     }
 
     private def findMethods(m: String, numParams: Int, ast: List[Class]) =

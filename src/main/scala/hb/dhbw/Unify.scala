@@ -132,6 +132,11 @@ object Unify {
     )
   }
 
+  def eraseFRule(eq: Set[UnifyConstraint]): Set[UnifyConstraint]= eq.filter(_ match {
+    case UnifyLessDot(UnifyRefType("Function", _), UnifyRefType("Object", _)) => false
+    case _ => true
+  })
+
   def reduceRule(eq: Set[UnifyConstraint]) =  eq.flatMap(c => c match {
     case UnifyEqualsDot(UnifyRefType(an, ap), UnifyRefType(bn, bp)) => {
       if(an.equals(bn)){
@@ -318,7 +323,7 @@ object Unify {
     var eqFinish: Set[UnifyConstraint] = eq
     do{
       eqNew = doWhileSome(Unify.equalsRule,eqFinish) //We have to apply equals rule first, to get rid of circles
-      eqFinish = eraseRule(swapRule(reduceRule(matchRule(adoptRule(adaptRule(eqNew, fc), fc), fc))))
+      eqFinish = eraseRule(swapRule(reduceRule(eraseFRule(matchRule(adoptRule(adaptRule(eqNew, fc), fc), fc)))))
     }while(!eqNew.equals(eqFinish))
     eqNew
   }
