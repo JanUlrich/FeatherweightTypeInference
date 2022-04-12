@@ -9,17 +9,6 @@ sealed abstract class UnifyType
 final case class UnifyRefType(name: String, params: List[UnifyType]) extends UnifyType
 final case class UnifyTV(name: String) extends UnifyType
 
-/*
-sealed abstract class ResultType
-final case class ResultTV(name: String) extends ResultType
-final case class ResultRefType(name: String, params: List[ResultType]) extends ResultType
-sealed abstract class UnifyResultConstraint
-final case class AExtendsB(a: TypeVariable, b: TypeVariable) extends UnifyResultConstraint
-final case class AExtendsN(a: TypeVariable, n: ResultRefType) extends UnifyResultConstraint
-final case class AEqualsB(a: TypeVariable, b: TypeVariable) extends UnifyResultConstraint
-final case class AEqualsN(a: TypeVariable, n: ResultRefType) extends UnifyResultConstraint
-*/
-
 object Unify {
 
   sealed trait Step4Result{
