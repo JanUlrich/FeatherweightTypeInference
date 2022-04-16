@@ -37,13 +37,22 @@ object Unify {
 
   def removeALessdotB(eq: Set[UnifyConstraint]): Set[UnifyConstraint] = {
     var ret = eq
-    val alessdotb:Set[UnifyConstraint] = eq.filter(_ match{
+    var ruleResult = subElimRule(ret)
+    while(ruleResult.isDefined){
+      ret = ruleResult.get
+      ruleResult = subElimRule(ruleResult.get)
+    }
+    ret
+  }
+
+  def subElimRule(eq: Set[UnifyConstraint]) : Option[Set[UnifyConstraint]] = {
+    var ret = eq
+    eq.find(_ match{
       case UnifyLessDot(UnifyTV(a), UnifyTV(b)) => true
       case _ => false
+    }).map(it => {
+      subst(it.left.asInstanceOf[UnifyTV], it.right, ret) ++ Set(UnifyEqualsDot(it.right, it.left))
     })
-    ret = ret.filter(it => !alessdotb.contains(it))
-    alessdotb.foreach(it => ret = subst(it.left.asInstanceOf[UnifyTV], it.right, ret))
-    ret ++ alessdotb.map(_ match {case UnifyLessDot(a, b) => UnifyEqualsDot(a,b)})
   }
 
   def unifyIterative(orCons: Set[Set[Set[UnifyConstraint]]], fc: FiniteClosure) : Set[Set[UnifyConstraint]] = {
