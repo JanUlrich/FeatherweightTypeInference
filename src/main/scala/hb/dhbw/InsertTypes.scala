@@ -14,7 +14,7 @@ object InsertTypes {
         case UnifyTV(n) => {
           val to = solvedCons.find(_.left == x).get
           to match {
-            case UnifyEqualsDot(UnifyTV(_), UnifyTV(x)) => this.sigma(UnifyTV(x))
+            case UnifyEqualsDot(UnifyTV(_), UnifyTV(x)) => GenericType(x)
             case UnifyEqualsDot(UnifyTV(_), UnifyRefType(n, ps)) => RefType(n, ps.map(this.sigma(_)))
             case UnifyLessDot(UnifyTV(x), UnifyRefType(n, ps)) => GenericType(x)
           }
