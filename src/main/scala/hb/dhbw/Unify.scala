@@ -51,7 +51,7 @@ object Unify {
       case UnifyLessDot(UnifyTV(a), UnifyTV(b)) => true
       case _ => false
     }).map(it => {
-      subst(it.left.asInstanceOf[UnifyTV], it.right, ret.filter(it != _)) ++ Set(UnifyEqualsDot(it.left, it.right), UnifyEqualsDot(it.right, it.right))
+      subst(it.right.asInstanceOf[UnifyTV], it.left, ret.filter(it != _)) ++ Set(UnifyEqualsDot(it.right, it.left), UnifyEqualsDot(it.left, it.left))
     })
   }
 
