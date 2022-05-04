@@ -35,7 +35,7 @@ object Unify {
     override def result: Set[UnifyConstraint] = eq
   }
 
-  def removeALessdotB(eq: Set[UnifyConstraint]): Set[UnifyConstraint] = {
+  def postProcessing(eq: Set[UnifyConstraint]): Set[UnifyConstraint] = {
     var ret = eq
     var ruleResult = subElimRule(ret)
     while(ruleResult.isDefined){
@@ -71,7 +71,7 @@ object Unify {
         val substResult = substStep(step2Result.nextProduct().flatten)
         substResult match{
           case UnchangedSet(eq) => if(isSolvedForm(eq)){
-            results = results + removeALessdotB(eq)
+            results = results + postProcessing(eq)
           }
           case ChangedSet(eq) =>
             eqSets = eqSets + new CartesianProduct[Set[UnifyConstraint]](Set(Set(eq)))

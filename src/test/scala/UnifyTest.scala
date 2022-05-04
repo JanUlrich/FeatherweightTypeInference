@@ -1,5 +1,5 @@
 
-import hb.dhbw.{FiniteClosure, RefType, TypeVariable, Unify, UnifyEqualsDot, UnifyLessDot, UnifyRefType, UnifyTV}
+import hb.dhbw.{FJNamedType, FiniteClosure, RefType, TypeVariable, Unify, UnifyConstraint, UnifyEqualsDot, UnifyLessDot, UnifyRefType, UnifyTV}
 import org.scalatest.FunSuite
 
 class UnifyTest extends FunSuite {
@@ -9,6 +9,19 @@ class UnifyTest extends FunSuite {
 
   val fc = new FiniteClosure(Set())
 
+  test("sub-elim rule"){
+    val input : Set[UnifyConstraint] = Set(UnifyLessDot(UnifyTV("a"), UnifyTV("b")), UnifyEqualsDot(UnifyTV("a"), UnifyRefType("a", List())))
+    val result = Unify.postProcessing(input)
+    println(result)
+    assert(result.contains(UnifyEqualsDot(UnifyTV("a"), UnifyTV("b"))))
+    assert(result.contains(UnifyEqualsDot(UnifyTV("b"), UnifyTV("a"))))
+  }
+  test("error"){
+    val input : Set[Set[Set[UnifyConstraint]]]= Set(Set(Set(UnifyLessDot(UnifyTV("1"), UnifyTV("B")), UnifyLessDot(UnifyTV("1"), UnifyTV("2")),
+      UnifyLessDot(UnifyRefType("Test", List()), UnifyTV("2")))))
+    val result = Unify.unifyIterative(input, new FiniteClosure(Set((FJNamedType("Test", List()), FJNamedType("Object", List())))))
+    println(result)
+  }
 
   /*
   test("Unify.step2") {
