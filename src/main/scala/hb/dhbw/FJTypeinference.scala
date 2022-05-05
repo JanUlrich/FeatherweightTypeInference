@@ -75,6 +75,17 @@ object FJTypeinference {
     Class(in.name, in.genericParams, in.superType, in.fields, newMethods.toList)
   }
 
+  def removeLessDotGenericConstraints(unifyResult: Set[Set[UnifyConstraint]], generics: Set[String]) :Set[Set[UnifyConstraint]] =
+    unifyResult.map(_.map( _ match { //
+      case UnifyLessDot(UnifyTV(a), UnifyRefType(name, List())) =>
+        if(generics.contains(name))
+            UnifyEqualsDot(UnifyTV(a), UnifyRefType(name, List()))
+          else
+            UnifyLessDot(UnifyTV(a), UnifyRefType(name, List()))
+      case x => x
+    }
+  ))
+
   def typeinference(str: String): Either[String, List[Class]] = {
     val ast = Parser.parse(str).map(ASTBuilder.fromParseTree(_))
     var typedClasses: List[Class] = List()
@@ -85,9 +96,10 @@ object FJTypeinference {
         val typeResult = TYPE.generateConstraints(newClassList, fc)
         val unifyResult = Unify.unifyIterative(convertOrConstraints(typeResult._1), typeResult._2)
 
+        val postProcessed = removeLessDotGenericConstraints(unifyResult, c.genericParams.map(_._1.asInstanceOf[GenericType].name).toSet)
         //Insert intersection types
         //val typeInsertedC = InsertTypes.applyResult(sigma, generics, c)//InsertTypes.insert(unifyResult, c)
-        val typeInsertedC = removeOverloadedSubtypeMethods(InsertTypes.applyUnifyResult(unifyResult, c), fc)
+        val typeInsertedC = removeOverloadedSubtypeMethods(InsertTypes.applyUnifyResult(postProcessed, c), fc)
         typedClasses = typedClasses :+ typeInsertedC
         cOld :+ typeInsertedC
       })

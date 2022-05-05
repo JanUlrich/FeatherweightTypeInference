@@ -24,19 +24,24 @@ object Unify {
     override def result: Set[UnifyConstraint] = eq
   }
 
-  def removeALessdotB(eq: Set[UnifyConstraint]): Set[UnifyConstraint] = {
+  def postProcessing(eq: Set[UnifyConstraint]): Set[UnifyConstraint] = {
     var ret = eq
-    val alessdotb:Set[UnifyConstraint] = eq.filter(_ match{
+    var ruleResult = subElimRule(ret)
+    while(ruleResult.isDefined){
+      ret = ruleResult.get
+      ruleResult = subElimRule(ruleResult.get)
+    }
+    ret
+  }
+
+  def subElimRule(eq: Set[UnifyConstraint]) : Option[Set[UnifyConstraint]] = {
+    var ret = eq
+    eq.find(_ match{
       case UnifyLessDot(UnifyTV(a), UnifyTV(b)) => true
       case _ => false
+    }).map(it => {
+      subst(it.right.asInstanceOf[UnifyTV], it.left, ret.filter(it != _)) ++ Set(UnifyEqualsDot(it.right, it.left), UnifyEqualsDot(it.left, it.left))
     })
-    ret = ret.filter(it => !alessdotb.contains(it))
-    var newADotEqB : Set[UnifyConstraint] = Set()
-    alessdotb.foreach(it => {
-      ret = subst(it.left.asInstanceOf[UnifyTV], it.right, ret)
-      newADotEqB = newADotEqB ++ Set(UnifyEqualsDot(it.right, it.left))
-    })
-    ret ++ alessdotb.map(_ match {case UnifyLessDot(a, b) => UnifyEqualsDot(a,b)}) ++ newADotEqB
   }
 
   def unifyIterative(orCons: Set[Set[Set[UnifyConstraint]]], fc: FiniteClosure) : Set[Set[UnifyConstraint]] = {
@@ -55,7 +60,7 @@ object Unify {
         val substResult = substStep(step2Result.nextProduct().flatten)
         substResult match{
           case UnchangedSet(eq) => if(isSolvedForm(eq)){
-            results = results + removeALessdotB(eq)
+            results = results + postProcessing(eq)
           }
           case ChangedSet(eq) =>
             eqSets = eqSets + new CartesianProduct[Set[UnifyConstraint]](Set(Set(eq)))
