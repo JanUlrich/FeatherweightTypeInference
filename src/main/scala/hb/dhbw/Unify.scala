@@ -35,12 +35,11 @@ object Unify {
   }
 
   def subElimRule(eq: Set[UnifyConstraint]) : Option[Set[UnifyConstraint]] = {
-    var ret = eq
     eq.find(_ match{
       case UnifyLessDot(UnifyTV(a), UnifyTV(b)) => true
       case _ => false
     }).map(it => {
-      subst(it.right.asInstanceOf[UnifyTV], it.left, ret.filter(it != _)) ++ Set(UnifyEqualsDot(it.right, it.left), UnifyEqualsDot(it.left, it.left))
+      subst(it.right.asInstanceOf[UnifyTV], it.left, eq.filter(it != _)) ++ Set(UnifyEqualsDot(it.right, it.left), UnifyEqualsDot(it.left, it.left))
     })
   }
 
