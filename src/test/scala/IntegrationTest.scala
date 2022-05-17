@@ -24,44 +24,6 @@ class IntegrationTest extends FunSuite {
     val result = FJTypeinference.typeinference("class List<A extends Object> extends Object{\n  add(a){\n  return this;\n}\n}")
     println(result.map(Main.prettyPrintAST(_)))
   }
-  /*
-  test("PaperExample"){
-    val result = FJTypeinference.typeinference("class List<A extends Object> extends Object{\n  add( a){\n  return this;\n}\n}\nclass Test extends Object{\nm(a){ return a.add(this);}\n}")
-    println(result.map(Main.prettyPrint(_)))
-  }
-
-  test("GenericVar"){
-    val result = FJTypeinference.typeinference("class List<A extends Object> extends Object{\nA a;\n\nget(){ return this.a;\n\n}\n}\n\n\nclass Test extends Object{\nList<String> test;\n\nm(a){\n   return this.test.get();\n}\n\n}")
-    println(result.map(Main.prettyPrint(_)))
-  }
-
-  test("IdentCallExample"){
-    val result = FJTypeinference.typeinference("class Test extends Object{\n\n  m(a,b){return this.m(a);\n}\nm(a){return a;}\n}")
-    println(result.map(Main.prettyPrint(_)))
-  }
-
-  test("IdentRecursive"){
-    val result = FJTypeinference.typeinference("class Test extends Object{\n\nm(a){\nreturn this.m(a);\n}\n}")
-    println(result.map(Main.prettyPrint(_)))
-  }
-
-  test("GetMethods"){
-    val result = FJTypeinference.typeinference("class Test extends Object{\nget(){ return this.get().get();}\n}\n\nclass Test2 extends Object{\nget(){ return this;}\n}" )
-    println(result.map(Main.prettyPrint(_)))
-  }
-
-  test("constructorTest"){
-    val input= "class Test extends Object{m(){ return new Test();}}"
-    val result = FJTypeinference.typeinference(input )
-    println(result.map(Main.prettyPrint(_)))
-  }
-
-  test("fieldVar access"){
-    val input ="class List<A extends Object> extends Object{\nA f;\nget(){ return this.f; }\n}\n\nclass Test2 extends Object{\nget(){ return new List(this).get();}\n}"
-    val result = FJTypeinference.typeinference(input )
-    println(result.map(Main.prettyPrint(_)))
-  }
-   */
 
   test("constructor.FieldInitialization") {
     val input = "class List<A extends Object> extends Object{\nA f;\n  add(a){\n  return new List(a);\n}\n}"
@@ -114,67 +76,4 @@ class IntegrationTest extends FunSuite {
     val result = FJTypeinference.typeinference(input)
     println(result.map(it => Main.prettyPrintAST(it)))
   }
-  /*
-
-class List<A extends Object> extends Object{
-  A head;
-  List<A> tail;
-  add( a){
-    return new List(a, this);
-  }
-  get(){
-    return this.head;
-  }
-}
-
-class PrincipleType extends Object {
-  function(a){
-    return a.add(this).get();
-  }
-}
-
-
-class Function<A extends Object, B extends Object> extends Object{
-B b;
-B apply(A a){
-return this.b;
-}
-}
-
-
-class Box<S extends Object> extends Object {
-S val ;
-map( f ) {
-return new Box(f.apply(this.val)) ;
-}
-}
-
-class Function<A extends Object, B extends Object> extends Object{
-B b;
-B apply(A a){
-return this.b;
-}
-
-}
-
-
-class RecursiveMethods extends Object{
-
-a1(x){ return this.a2(x);}
-a2(y){ return this.a1(y);}
-}
-   */
-    /*
-  Additional Tests:
-
-class Test extends Object{
- m(a, b){return a;}
-m(a,b){return b;}
-}
-
-class Test2 extends Object{
-test(a){return new Test().m(this,a);}
-}
-
-   */
 }
