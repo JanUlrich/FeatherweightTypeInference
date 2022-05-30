@@ -1,17 +1,7 @@
 package hb.dhbw
 
 class CartesianProduct[A](private val setOfSets: List[List[A]]){
-  def productWith(product: CartesianProduct[A]) = {
-    val ret = new CartesianProduct[A](setOfSets ++ product.setOfSets)
-    var base: Long = 1
-    ret.sizes = ret.setOfSets.map(_.size)
-    ret.sizes.foreach(size => {
-      base = base * size
-    })
-    ret.max = base
-    ret.i = i
-    ret
-  }
+  //def addPossibilities(Set[A]) //TODO
 
   private var sizes: List[Int] = null
   private var max: Long = 1
