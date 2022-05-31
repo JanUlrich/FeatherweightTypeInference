@@ -78,6 +78,11 @@ object Unify {
       .map(t => UnifyEqualsDot(b, convertNamedType(t)))
   }
 
+  private def getUpperBound(forTV: UnifyTV, eq: Set[UnifyConstraint]) = eq.find(_ match {
+    case UnifyLessDot(UnifyTV(a), UnifyRefType(n, params)) => UnifyTV(a).eq(forTV)
+    case _ => false
+  }).getOrElse(UnifyLessDot(forTV, UnifyRefType("Object", List()))).asInstanceOf[UnifyLessDot]
+
   def step2(eq : Set[UnifyConstraint], fc: FiniteClosure) ={
     val eq1 = eq.filter(c => c match{
       case UnifyLessDot(UnifyTV(_), UnifyTV(_)) => true
@@ -93,10 +98,7 @@ object Unify {
       case _ => false
     }).asInstanceOf[Set[UnifyLessDot]]
     val lowerAndUpperBoundConstraints = lowerBoundConstraints.map(lowerBound => {
-      val upperBound = eq.find(_ match {
-        case UnifyLessDot(UnifyTV(a), UnifyRefType(n, params)) => UnifyTV(a).eq(lowerBound.right)
-        case _ => false
-      }).getOrElse(UnifyLessDot(lowerBound.right, UnifyRefType("Object", List()))).asInstanceOf[UnifyLessDot]
+      val upperBound = getUpperBound(lowerBound.right.asInstanceOf[UnifyTV], eq)
       (lowerBound, upperBound)
     })
     val expandLBOrConstraints = lowerAndUpperBoundConstraints.map(bounds => expandLB(bounds._1, bounds._2, fc))
@@ -108,11 +110,14 @@ object Unify {
       case _ => false
     }).asInstanceOf[Set[UnifyLessDot]]
 
-    tvInLowerBoundConstraints.map(tv => {
+    lowerBoundConstraints.map(lowerBound => {
+      val tv = lowerBound.right.asInstanceOf[UnifyTV]
       val bs = aUnifyLessDota.flatMap(c => Set(c.left, c.right)).asInstanceOf[Set[UnifyTV]]
         .filter(variable => !variable.equals(tv) && isLinked(tv, variable, aUnifyLessDota))
       bs.map(b => {
-        //expandLB()
+        val upperBound = getUpperBound(b, eq)
+        //Result:
+        Set(expandLB(lowerBound, upperBound, fc), Set(UnifyLessDot(b, lowerBound.left)))
       })
     })
 
