@@ -89,4 +89,11 @@ class IntegrationTest extends FunSuite {
     assert(result.isRight)
     println(result.map(it => Main.prettyPrintAST(it)))
   }
+
+  test("extendsWithComplexType") {
+    val input = "class Pair<A extends Object, B extends Object> extends Object {}\n\nclass Test<A extends Object> extends Pair<Pair<A,A>,A> {\n\nm(a){return this;}\n\n\n}"
+    val result = FJTypeinference.typeinference(input)
+    assert(result.isRight)
+    println(result.map(it => Main.prettyPrintAST(it)))
+  }
 }
