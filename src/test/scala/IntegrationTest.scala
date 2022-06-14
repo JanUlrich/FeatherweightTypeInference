@@ -96,4 +96,11 @@ class IntegrationTest extends FunSuite {
     assert(result.isRight)
     println(result.map(it => Main.prettyPrintAST(it)))
   }
+
+  test("pairAdd.twoTimes") {
+    val input = "class Pair<A extends Object> extends Object{\n    A fst;\n    \n    setfst(p) {\n      return p;\n    }\n  }\n\n  class Example extends Object{\n\n    m(p){\n      return p.setfst(p.setfst(this));\n    }\n  }"
+    val result = FJTypeinference.typeinference(input)
+    assert(result.isRight)
+    println(result.map(it => Main.prettyPrintAST(it)))
+  }
 }

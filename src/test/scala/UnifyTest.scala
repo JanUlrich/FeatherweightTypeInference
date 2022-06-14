@@ -34,8 +34,6 @@ class UnifyTest extends FunSuite {
       UnifyLessDot(UnifyTV("F"), UnifyRefType("Object", List())))
     val result = Unify.unifyIterative(Set(Set(input)), new FiniteClosure(Set((FJNamedType("Pair", List(FJNamedType("X", List()),FJNamedType("X", List()))), FJNamedType("Object", List())))))
     println(result)
-    //assert(result.contains(UnifyEqualsDot(UnifyTV("a"), UnifyTV("b"))))
-    //assert(result.contains(UnifyEqualsDot(UnifyTV("b"), UnifyTV("a"))))
   }
   /*
   test("Unify.step2") {

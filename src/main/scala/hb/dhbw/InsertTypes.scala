@@ -11,7 +11,7 @@ object InsertTypes {
       case v => v
     }
     def sigma(x: UnifyType): Type = { x match {
-        case UnifyTV(n) => {
+        case UnifyTV(n) =>
           val to = solvedCons.find(_.left == x).get
           to match {
             case UnifyEqualsDot(UnifyTV(_), UnifyTV(x)) => GenericType(x)
@@ -19,7 +19,6 @@ object InsertTypes {
             case UnifyEqualsDot(UnifyTV(_), UnifyRefType(n, ps)) => RefType(n, ps.map(this.sigma(_)))
             case UnifyLessDot(UnifyTV(x), UnifyRefType(n, ps)) => GenericType(x)
           }
-        }
         case UnifyRefType(n, List()) => if(genericNames.contains(n)) GenericType(n) else RefType(n, List())
         case UnifyRefType(n, ps) => RefType(n, ps.map(sigma))
       }
