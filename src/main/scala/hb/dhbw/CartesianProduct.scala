@@ -1,5 +1,14 @@
 package hb.dhbw
 
+class CartesianProductBuilder[A](){
+  def addSingleton(a:A){
+    throw new NotImplementedError()
+  }
+  def add(as : Set[A]): Unit ={
+    throw new NotImplementedError()
+  }
+}
+
 class CartesianProduct[A](private val setOfSets: List[List[A]]){
   //def addPossibilities(Set[A]) //TODO
 
