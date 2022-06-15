@@ -35,6 +35,12 @@ class UnifyTest extends FunSuite {
     val result = Unify.unifyIterative(Set(Set(input)), new FiniteClosure(Set((FJNamedType("Pair", List(FJNamedType("X", List()),FJNamedType("X", List()))), FJNamedType("Object", List())))))
     println(result)
   }
+
+  test("getLinks.emptySet"){
+    val input : Set[UnifyLessDot] = Set()
+    val ret = Unify.getLinks(UnifyTV("a"), input)
+    assert(ret.equals(Set.empty))
+  }
   /*
   test("Unify.step2") {
     var step2 = Unify.step2(Set(UnifyLessDot(TypeVariable("a"), TypeVariable("b")),
