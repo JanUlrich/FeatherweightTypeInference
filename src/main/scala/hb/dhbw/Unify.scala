@@ -1,5 +1,7 @@
 package hb.dhbw
 
+import hb.dhbw.Unify.getLinks
+
 
 sealed abstract class UnifyConstraint(val left: UnifyType, val right: UnifyType)
 final case class UnifyLessDot(override val left: UnifyType, override val right: UnifyType) extends UnifyConstraint(left, right)
@@ -84,8 +86,9 @@ object Unify {
   }).getOrElse(UnifyLessDot(forTV, UnifyRefType("Object", List()))).asInstanceOf[UnifyLessDot]
 
   def step2(eq : Set[UnifyConstraint], fc: FiniteClosure) ={
+    /*
+
     //Part one: use expandLB on lower Bound constraints:
-    val cpBuilder = new CartesianProductBuilder[Set[UnifyConstraint]]()
     val lowerBoundConstraints : Set[UnifyLessDot] = eq.filter(_ match {
       case UnifyLessDot(UnifyRefType(_,_), UnifyTV(_)) => true
       case _ => false
@@ -99,72 +102,51 @@ object Unify {
 
     // Part two: a <. Type, a <.* b constraints:
     //TODO
-
-    val eq1 = eq.filter(c => c match{
+    val aUnifyLessDota = eq.filter(c => c match{
       case UnifyLessDot(UnifyTV(_), UnifyTV(_)) => true
-      case UnifyEqualsDot(UnifyTV(_), UnifyTV(_)) => true
       case _ => false
-    })
+    }).asInstanceOf[Set[UnifyLessDot]]
+    eq.filter(_ match {
+      case UnifyLessDot(UnifyTV(_), UnifyRefType(_, _)) => true
+      case _ => false
+    }).map(cons => {
+      val tv : UnifyTV = cons.left.asInstanceOf[UnifyTV]
+      getLinks(tv, aUnifyLessDota)
+        .map(b => {
+          val upperBound = getUpperBoundOrSetUpperBoundToObject(b, eq)
+          val lowerBound = UnifyLessDot(cons.right, b)
+          //ExpandLB and add to return constraint set
+          cpBuilder.add(expandLB(lowerBound, upperBound, fc) + Set(UnifyLessDot(b,b)))
 
-    val tvInLowerBoundConstraints = lowerBoundConstraints.map(_.right.asInstanceOf[UnifyTV])
-    val aUnifyLessDota = eq1.filter(c => c match{
+        })
+    })
+     */
+    val cpBuilder = new CartesianProductBuilder[Set[UnifyConstraint]]()
+    val aUnifyLessDota = eq.filter(c => c match{
       case UnifyLessDot(UnifyTV(_), UnifyTV(_)) => true
       case _ => false
     }).asInstanceOf[Set[UnifyLessDot]]
 
-    lowerBoundConstraints.flatMap(lowerBound => {
-      val tv = lowerBound.right.asInstanceOf[UnifyTV]
-      val bs = aUnifyLessDota.flatMap(c => Set(c.left, c.right)).asInstanceOf[Set[UnifyTV]]
-        .filter(variable => !variable.equals(tv) && isLinked(tv, variable, aUnifyLessDota))
-      val ret : Set[CartesianProduct[UnifyConstraint]] = bs.map(b => {
-        val upperBound = getUpperBoundOrSetUpperBoundToObject(b, eq)
-        //Result:
-        new CartesianProduct(Set[Set[Set[UnifyConstraint]]](Set(expandLB(lowerBound, upperBound, fc)), Set(Set(UnifyLessDot(b, lowerBound.left)))))
-      })
-      ret
-    })
-
-    val cUnifyLessDotACons: Set[Set[Set[UnifyConstraint]]] = eq.map(c => c match{
-      case UnifyLessDot(UnifyRefType(name,params), UnifyTV(a)) =>
-        getSuperTypes(UnifyRefType(name,params), fc)
-          .map(superType => Set(UnifyEqualsDot(UnifyTV(a), superType).asInstanceOf[UnifyConstraint]))
-      case _ => null
-    }).filter(s => s!=null)
-
-
-
-    val aUnifyLessDotCConsAndBs: Set[(UnifyLessDot,Option[UnifyTV])] = eq.map(c => c match{
-      case UnifyLessDot(UnifyTV(a),UnifyRefType(name,params)) =>{
-        val bs = aUnifyLessDota.flatMap(c => Set(c.left, c.right)).asInstanceOf[Set[UnifyTV]]
-          .filter(c => !a.equals(c) && isLinked(UnifyTV(a), c, aUnifyLessDota))
-        if(bs.isEmpty){
-          Set((UnifyLessDot(UnifyTV(a),UnifyRefType(name,params)),None))
-        }else{
-          bs.map(b => (UnifyLessDot(UnifyTV(a),UnifyRefType(name,params)),Some(b)))
-        }
+    eq.foreach(cons => cons match {
+      case UnifyLessDot(UnifyRefType(n, ps), UnifyTV(a)) => {
+        val lowerBound = UnifyLessDot(UnifyRefType(n, ps), UnifyTV(a))
+        val upperBound = getUpperBoundOrSetUpperBoundToObject(lowerBound.right.asInstanceOf[UnifyTV], eq)
+        cpBuilder.add(expandLB(lowerBound, upperBound, fc))
       }
-      case _ => null
-    }).filter(s => s!=null).flatten
-
-    val aUnifyLessDotCCons =  aUnifyLessDotCConsAndBs.map{
-      case (ac:UnifyLessDot,Some(b)) =>
-        Set(Set(UnifyLessDot(b, ac.right))) ++
-          getSuperTypes(ac.right.asInstanceOf[UnifyRefType], fc)
-            .map(superType => Set(UnifyEqualsDot(b, superType)))
-      case (ac, None) => null
-    }.filter(c => c != null).asInstanceOf[Set[Set[Set[UnifyConstraint]]]]
-
-    val eq2 = eq.filter(c => c match{
-      case UnifyLessDot(UnifyTV(_), UnifyRefType(_,_)) => true
-      case UnifyEqualsDot(UnifyTV(_), UnifyRefType(_,_)) => true
-      case UnifyEqualsDot(UnifyRefType(_,_),UnifyTV(_)) => true
-      case UnifyEqualsDot(UnifyRefType(_,_),UnifyRefType(_,_)) => true
-      case UnifyLessDot(UnifyRefType(_,_),UnifyRefType(_,_)) => true
-      case _ => false
+      case UnifyLessDot(UnifyTV(a), UnifyRefType(n, ps)) =>
+        getLinks(UnifyTV(a), aUnifyLessDota)
+          .map(b => {
+            val upperBound = getUpperBoundOrSetUpperBoundToObject(b, eq)
+            val lowerBound = UnifyLessDot(UnifyRefType(n, ps), b)
+            //ExpandLB and add to return constraint set + {b <. C<T>} constraint
+            cpBuilder.add(expandLB(lowerBound, upperBound, fc) + Set(UnifyLessDot(b, b)))
+          })
+        cpBuilder.addSingleton(Set(UnifyLessDot(UnifyTV(a), UnifyRefType(n, ps))))
+        //the upper bound constraint remains in the constraint set:
+        cpBuilder.addSingleton(Set(UnifyLessDot(UnifyTV(a), UnifyRefType(n, ps))))
+      case cons => cpBuilder.addSingleton(Set(cons))
     })
-    val eqSet = new CartesianProduct[Set[UnifyConstraint]](
-      Set(Set(eq1)) ++ Set(Set(eq2)) ++ aUnifyLessDotCCons ++ cUnifyLessDotACons)
-    eqSet
+    cpBuilder.build()
   }
 
   private def getAUnifyLessDotC(from: Set[UnifyConstraint]) = from.filter(c => c match{
@@ -249,6 +231,14 @@ object Unify {
       case UnifyEqualsDot(UnifyTV(a), UnifyTV(b)) => ! a.equals(b)
       case _ => true
     })
+
+  /**
+   * Every 'b' with a <.* b
+   */
+  private def getLinks(a: UnifyTV, aUnifyLessDota: Set[UnifyLessDot]): Set[UnifyTV] =
+    aUnifyLessDota.filter(c => c.left.asInstanceOf[UnifyTV].name.equals(a.name))
+      .flatMap(cons => Set(cons.right.asInstanceOf[UnifyTV]) ++ getLinks(cons.right.asInstanceOf[UnifyTV], aUnifyLessDota))
+
 
   private def isLinked(a: UnifyTV, b: UnifyTV, aUnifyLessDota: Set[UnifyLessDot]): Boolean = {
     def getRightSides(of: UnifyTV) ={

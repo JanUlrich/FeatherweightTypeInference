@@ -1,11 +1,14 @@
 package hb.dhbw
 
 class CartesianProductBuilder[A](){
+  var ret : Set[Set[A]] = Set()
+  def build() : CartesianProduct[A] = new CartesianProduct[A](ret)
+
   def addSingleton(a:A){
-    throw new NotImplementedError()
+    ret += Set(a)
   }
   def add(as : Set[A]): Unit ={
-    throw new NotImplementedError()
+    ret += as
   }
 }
 

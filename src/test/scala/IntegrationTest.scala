@@ -15,6 +15,7 @@ class IntegrationTest extends FunSuite {
     val result = FJTypeinference.typeinference("class Test extends Object {\nObject f;\nm(a){return a;}\n}")
     assert(result.isRight)
     println(result)
+    println(result.map(Main.prettyPrintAST(_)))
   }
 
   test("IdMethodRecursive"){
