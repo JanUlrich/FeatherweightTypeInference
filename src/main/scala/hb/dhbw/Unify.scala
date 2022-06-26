@@ -218,33 +218,29 @@ object Unify {
     }
   }
 
-  private def findCircles(aUnifyLessDota: Set[UnifyLessDot]) ={
-    def getRightSides(of: UnifyTV) ={
-      aUnifyLessDota.filter(c => c.left.asInstanceOf[UnifyTV].name.equals(of.name))
-    }
-    def findCircle(graph: List[UnifyLessDot]): List[UnifyLessDot] = {
-      val newAdditions = getRightSides(graph.last.right.asInstanceOf[UnifyTV])
-      var circle: List[UnifyLessDot] = List()
-      val iterator = newAdditions.iterator
-      while(iterator.hasNext && circle.isEmpty){
-        val newAdd = iterator.next()
-        if(newAdd.right.equals(graph.head.left)){
-          circle = graph :+ newAdd
-        }else{
-          circle = findCircle(graph ++ List(newAdd))
-        }
-      }
-      circle
-    }
-    aUnifyLessDota.view.map(c => findCircle(List(c)))
-  }
-
   def equalsRule(eq: Set[UnifyConstraint]) ={
     val aUnifyLessDota = eq.filter(c => c match{
       case UnifyLessDot(UnifyTV(_), UnifyTV(_)) => true
       case _ => false
     }).asInstanceOf[Set[UnifyLessDot]]
-    val circle = findCircles(aUnifyLessDota).find(!_.isEmpty)
+    def getRightSides(of: UnifyTV) ={
+      aUnifyLessDota.filter(c => c.left.asInstanceOf[UnifyTV].name.equals(of.name))
+    }
+    def findCircle(start: UnifyTV) : List[UnifyLessDot] = findCircleRec(start, Set(start))
+    def findCircleRec(next: UnifyTV, visited: Set[UnifyTV]): List[UnifyLessDot] = {
+      val rightSides = getRightSides(next).iterator
+      while(rightSides.hasNext){ //Deep search
+        val rightSide = rightSides.next()
+        val nextTV = rightSide.right.asInstanceOf[UnifyTV]
+        if(visited.contains(nextTV)){
+          return List(rightSide)
+        }else{
+          return rightSide :: findCircleRec(nextTV, visited + nextTV)
+        }
+      }
+      List() // empty list means there are no circles
+    }
+    val circle = aUnifyLessDota.map(cons => findCircle(cons.left.asInstanceOf[UnifyTV])).find(!_.isEmpty)
     if(circle.isDefined){
       val newEq = eq -- circle.get
       Some(newEq ++ (circle.get.map(c => UnifyEqualsDot(c.left, c.right))))
