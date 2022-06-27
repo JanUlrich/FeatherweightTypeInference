@@ -28,10 +28,14 @@ class FiniteClosure(val extendsRelations : Set[(FJNamedType, FJNamedType)]){
     ref.result()
   }
   private def superClassTypes(of: FJNamedType) = {
+    def paramSubst(param : FJType, paramMap : Map[FJType, FJType]): FJType = param match{
+      case FJNamedType(n, params) => FJNamedType(n, params.map(paramSubst(_, paramMap)))
+      case typeVariable => paramMap.get(typeVariable).get
+    }
     val extendsRelation = extendsRelations.filter(pair => pair._1.name.equals(of.name))
     extendsRelation.map(p => {
       val paramMap = p._1.params.zip(of.params).toMap
-      (of,FJNamedType(p._2.name, p._2.params.map(paramMap)))
+      (of,FJNamedType(p._2.name, p._2.params.map(paramSubst(_, paramMap))))
     })
   }
   private def superClassTypes(of: Set[(FJNamedType, FJNamedType)]) : Set[(FJNamedType, FJNamedType)] ={
