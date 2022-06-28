@@ -120,12 +120,13 @@ object Unify {
 
   def matchRule(eq : Set[UnifyConstraint], fc: FiniteClosure) = {
     val aUnifyLessDotC = getAUnifyLessDotC(eq)
-    (eq -- aUnifyLessDotC) ++ aUnifyLessDotC.map(c => {
-      val smallerC = aUnifyLessDotC.find(c2 => c2 != c && c2.left.equals(c.left) && fc.isPossibleSupertype(c2.right.asInstanceOf[UnifyRefType].name,c.right.asInstanceOf[UnifyRefType].name))
+    (eq -- aUnifyLessDotC) ++ aUnifyLessDotC.flatMap(c => {
+      val smallerC = aUnifyLessDotC.filter(c2 => c2 != c && c2.left.equals(c.left) && fc.isPossibleSupertype(c2.right.asInstanceOf[UnifyRefType].name,c.right.asInstanceOf[UnifyRefType].name))
       if(smallerC.isEmpty){
-        c
+        List(c)
       }else{
-        UnifyLessDot(smallerC.get.right, c.right)
+        val list = smallerC.toList
+        UnifyLessDot(list.head.right, c.right) :: list.tail
       }
     }
     )
@@ -321,7 +322,13 @@ object Unify {
     var eqFinish: Set[UnifyConstraint] = eq
     do{
       eqNew = doWhileSome(Unify.equalsRule,eqFinish) //We have to apply equals rule first, to get rid of circles
-      eqFinish = eraseRule(swapRule(reduceRule(matchRule(adoptRule(adaptRule(eqNew, fc), fc), fc))))
+      val adaptRuleResult = adaptRule(eqNew, fc)
+      val adoptRuleResult = adoptRule(adaptRuleResult, fc)
+      val matchRuleResult = matchRule(adoptRuleResult, fc)
+      val reduceRuleResult = reduceRule(matchRuleResult)
+      val swapRuleResult = swapRule(reduceRuleResult)
+      val eraseRuleResult = eraseRule(swapRuleResult)
+      eqFinish = eraseRuleResult
     }while(!eqNew.equals(eqFinish))
     eqNew
   }
