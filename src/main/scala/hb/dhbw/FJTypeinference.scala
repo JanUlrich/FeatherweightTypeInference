@@ -98,7 +98,6 @@ object FJTypeinference {
 
         val postProcessed = removeLessDotGenericConstraints(unifyResult, c.genericParams.map(_._1.asInstanceOf[GenericType].name).toSet)
         //Insert intersection types
-        //val typeInsertedC = InsertTypes.applyResult(sigma, generics, c)//InsertTypes.insert(unifyResult, c)
         val typeInsertedC = removeOverloadedSubtypeMethods(InsertTypes.applyUnifyResult(postProcessed, c), fc)
         typedClasses = typedClasses :+ typeInsertedC
         cOld :+ typeInsertedC

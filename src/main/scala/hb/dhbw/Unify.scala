@@ -1,8 +1,5 @@
 package hb.dhbw
 
-import hb.dhbw.Unify.getLinks
-
-
 sealed abstract class UnifyConstraint(val left: UnifyType, val right: UnifyType)
 final case class UnifyLessDot(override val left: UnifyType, override val right: UnifyType) extends UnifyConstraint(left, right)
 final case class UnifyEqualsDot(override val left: UnifyType, override val right: UnifyType) extends UnifyConstraint(left, right)

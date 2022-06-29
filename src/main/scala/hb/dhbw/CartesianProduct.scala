@@ -13,8 +13,6 @@ class CartesianProductBuilder[A](){
 }
 
 class CartesianProduct[A](private val setOfSets: List[List[A]]){
-  //def addPossibilities(Set[A]) //TODO
-
   private var sizes: List[Int] = null
   private var max: Long = 1
   private var i: Long = 0
