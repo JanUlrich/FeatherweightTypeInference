@@ -62,4 +62,11 @@ class ParserTest extends FunSuite {
     println(fastparse.parse("class List<A extends Object> extends Object{asd(){ return this;  }get(){ return this.head;}}"
       , hb.dhbw.Parser.program(_)))
   }
+
+  test("Konstruktor"){
+    val parsed = fastparse.parse("class Pair<X extends Object, Y extends Object> extends Object{\n  X fst;\n  Y snd;\n  Pair(fst, snd) {\n    this.fst=fst;\n    this.snd=snd;\n  }\n}"
+      , hb.dhbw.Parser.program(_))
+    assert(parsed.isSuccess)
+    println(parsed.get)
+  }
 }

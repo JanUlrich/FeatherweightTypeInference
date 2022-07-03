@@ -1,18 +1,18 @@
 package hb.dhbw
 
-class CartesianProduct[A](private val setOfSets: List[List[A]]){
-  def productWith(product: CartesianProduct[A]) = {
-    val ret = new CartesianProduct[A](setOfSets ++ product.setOfSets)
-    var base: Long = 1
-    ret.sizes = ret.setOfSets.map(_.size)
-    ret.sizes.foreach(size => {
-      base = base * size
-    })
-    ret.max = base
-    ret.i = i
-    ret
-  }
+class CartesianProductBuilder[A](){
+  var ret : Set[Set[A]] = Set()
+  def build() : CartesianProduct[A] = new CartesianProduct[A](ret)
 
+  def addSingleton(a:A){
+    ret += Set(a)
+  }
+  def add(as : Set[A]): Unit ={
+    ret += as
+  }
+}
+
+class CartesianProduct[A](private val setOfSets: List[List[A]]){
   private var sizes: List[Int] = null
   private var max: Long = 1
   private var i: Long = 0

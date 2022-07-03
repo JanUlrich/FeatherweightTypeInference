@@ -1,6 +1,12 @@
-## Typeinference for Featherweight Java
+# Typeinference for Featherweight Java
+
+## Getting started
 
 [Try it here](https://janulrich.github.io/FeatherweightTypeInference/)
+
+## Building
+
+```sbt fullLinkJS```
 
 ### Input Examples
 

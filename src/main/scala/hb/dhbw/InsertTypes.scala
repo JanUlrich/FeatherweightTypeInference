@@ -5,20 +5,21 @@ object InsertTypes {
 
   // Unify step 6:
   //TODO: a <. X must be replaced by X -> sigma(a) = GenericType(X) in that case
-  private class UnifyResult(solvedCons: Set[UnifyConstraint]){
+  private class UnifyResult(solvedCons: Set[UnifyConstraint], genericNames: Set[String]){
     def sigma(x: Type): Type = x match {
       case TypeVariable(n) => sigma(UnifyTV(x.asInstanceOf[TypeVariable].name))
       case v => v
     }
     def sigma(x: UnifyType): Type = { x match {
-        case UnifyTV(n) => {
+        case UnifyTV(_) =>
           val to = solvedCons.find(_.left == x).get
           to match {
-            case UnifyEqualsDot(UnifyTV(_), UnifyTV(x)) => this.sigma(UnifyTV(x))
+            case UnifyEqualsDot(UnifyTV(_), UnifyTV(x)) => GenericType(x)
+            case UnifyEqualsDot(UnifyTV(_), UnifyRefType(n, List())) => if(genericNames.contains(n)) GenericType(n) else RefType(n, List())
             case UnifyEqualsDot(UnifyTV(_), UnifyRefType(n, ps)) => RefType(n, ps.map(this.sigma(_)))
             case UnifyLessDot(UnifyTV(x), UnifyRefType(n, ps)) => GenericType(x)
           }
-        }
+        case UnifyRefType(n, List()) => if(genericNames.contains(n)) GenericType(n) else RefType(n, List())
         case UnifyRefType(n, ps) => RefType(n, ps.map(sigma))
       }
 
@@ -34,7 +35,7 @@ object InsertTypes {
   def applyUnifyResult(eq: Set[Set[UnifyConstraint]], into: Class) = {
     val newMethods = into.methods.flatMap(m => {
       eq.map(req => {
-        val result = new UnifyResult(req)
+        val result = new UnifyResult(req, into.genericParams.map(_._1.asInstanceOf[GenericType].name).toSet)
         Method(result.delta(), result.sigma(m.retType), m.name, m.params.map(p => (result.sigma(p._1), p._2)), m.retExpr)
       })
     })
@@ -108,22 +109,6 @@ object InsertTypes {
 
     val constraints = flatted.map(_.map(refTypeInConsToGenerics(_)))
 
-    /*
-
-    def extractTVNames(unifyType: UnifyType): Set[String] = unifyType match {
-      case UnifyTV(name) => Set(name)
-      case UnifyRefType(_, params) => params.flatMap(extractTVNames(_)).toSet
-    }
-
-    val genericNames:Set[String] = into.genericParams.map(_._1).flatMap(_ match {
-      case GenericType(name) => Some(name)
-      case _ => None
-    }).toSet ++ unifyResult.flatMap(_.flatMap(_ match{
-      case UnifyLessDot(a,b) => Set(a, b)
-      case UnifyEqualsDot(a,b) => Set(a,b)
-    })).flatMap(extractTVNames(_))
-    val constraints = normalized.map(_.map(replaceRefTypeWithGeneric(_, genericNames)))
- */
     val newMethods = into.methods.flatMap(m => constraints.map(cons => insert(cons, m)))
     Class(into.name, into.genericParams, into.superType, into.fields, newMethods)
   }

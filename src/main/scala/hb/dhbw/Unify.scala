@@ -1,6 +1,5 @@
 package hb.dhbw
 
-
 sealed abstract class UnifyConstraint(val left: UnifyType, val right: UnifyType)
 final case class UnifyLessDot(override val left: UnifyType, override val right: UnifyType) extends UnifyConstraint(left, right)
 final case class UnifyEqualsDot(override val left: UnifyType, override val right: UnifyType) extends UnifyConstraint(left, right)
@@ -8,17 +7,6 @@ final case class UnifyEqualsDot(override val left: UnifyType, override val right
 sealed abstract class UnifyType
 final case class UnifyRefType(name: String, params: List[UnifyType]) extends UnifyType
 final case class UnifyTV(name: String) extends UnifyType
-
-/*
-sealed abstract class ResultType
-final case class ResultTV(name: String) extends ResultType
-final case class ResultRefType(name: String, params: List[ResultType]) extends ResultType
-sealed abstract class UnifyResultConstraint
-final case class AExtendsB(a: TypeVariable, b: TypeVariable) extends UnifyResultConstraint
-final case class AExtendsN(a: TypeVariable, n: ResultRefType) extends UnifyResultConstraint
-final case class AEqualsB(a: TypeVariable, b: TypeVariable) extends UnifyResultConstraint
-final case class AEqualsN(a: TypeVariable, n: ResultRefType) extends UnifyResultConstraint
-*/
 
 object Unify {
 
@@ -35,22 +23,23 @@ object Unify {
     override def result: Set[UnifyConstraint] = eq
   }
 
-  def removeALessdotB(eq: Set[UnifyConstraint]): Set[UnifyConstraint] = {
+  def postProcessing(eq: Set[UnifyConstraint]): Set[UnifyConstraint] = {
     var ret = eq
-    val alessdotb:Set[UnifyConstraint] = eq.filter(_ match{
+    var ruleResult = subElimRule(ret)
+    while(ruleResult.isDefined){
+      ret = ruleResult.get
+      ruleResult = subElimRule(ruleResult.get)
+    }
+    ret
+  }
+
+  def subElimRule(eq: Set[UnifyConstraint]) : Option[Set[UnifyConstraint]] = {
+    eq.find(_ match{
       case UnifyLessDot(UnifyTV(a), UnifyTV(b)) => true
       case _ => false
+    }).map(it => {
+      subst(it.right.asInstanceOf[UnifyTV], it.left, eq.filter(it != _)) ++ Set(UnifyEqualsDot(it.right, it.left), UnifyEqualsDot(it.left, it.left))
     })
-    ret = ret.filter(it => !alessdotb.contains(it))
-    alessdotb.foreach(it => ret = subst(it.left.asInstanceOf[UnifyTV], it.right, ret))
-    /*
-    .filter(_ match{
-      case UnifyEqualsDot(UnifyTV(a), UnifyTV(b)) => a != b
-      case UnifyLessDot(UnifyTV(_), UnifyTV(_)) => false
-      case _ => true
-    })
-     */
-    ret ++ alessdotb.map(_ match {case UnifyLessDot(a, b) => UnifyEqualsDot(a,b)})
   }
 
   def unifyIterative(orCons: Set[Set[Set[UnifyConstraint]]], fc: FiniteClosure) : Set[Set[UnifyConstraint]] = {
@@ -69,7 +58,7 @@ object Unify {
         val substResult = substStep(step2Result.nextProduct().flatten)
         substResult match{
           case UnchangedSet(eq) => if(isSolvedForm(eq)){
-            results = results + removeALessdotB(eq)
+            results = results + postProcessing(eq)
           }
           case ChangedSet(eq) =>
             eqSets = eqSets + new CartesianProduct[Set[UnifyConstraint]](Set(Set(eq)))
@@ -80,75 +69,45 @@ object Unify {
     results
   }
 
-  /*
-  def unify(orCons: Set[Set[Set[UnifyConstraint]]], fc: FiniteClosure) : Set[Set[UnifyConstraint]] = {
-    val eqSets = cartesianProduct(orCons)
-    val step2Results = eqSets.flatMap(eqSet => {
-      val rulesResult = applyRules(fc)(eqSet.flatten)
-      step2(rulesResult, fc)
-    })
-    step2Results.flatMap(eqSet => {
-      val (substResult, unifier) = substStep(eqSet)
-      if(!unifier.isDefined){
-        if(isSolvedForm(substResult))
-          Set(substResult)
-        else Set()
-      }else{
-        unify(Set(Set(substResult)), fc).map(s => s + unifier.get)
-      }
-    })
+  def expandLB(lowerBound: UnifyLessDot, upperBound: UnifyLessDot, fc: FiniteClosure): Set[Set[UnifyConstraint]] ={
+    val b:UnifyTV = lowerBound.right.asInstanceOf[UnifyTV]
+    val lowerBoundType : UnifyRefType = lowerBound.left.asInstanceOf[UnifyRefType]
+    val upperBoundType : UnifyRefType = upperBound.right.asInstanceOf[UnifyRefType]
+    fc.superTypes(convertRefType(lowerBoundType)).filter(t => fc.aIsSubtypeOfb(t, convertRefType(upperBoundType)))
+      .map(t => Set(UnifyEqualsDot(b, convertNamedType(t))))
   }
-*/
-  def step2(eq : Set[UnifyConstraint], fc: FiniteClosure) ={
-    val eq1 = eq.filter(c => c match{
-      case UnifyLessDot(UnifyTV(_), UnifyTV(_)) => true
-      case UnifyEqualsDot(UnifyTV(_), UnifyTV(_)) => true
-      case _ => false
-    })
-    val cUnifyLessDotACons: Set[Set[Set[UnifyConstraint]]] = eq.map(c => c match{
-      case UnifyLessDot(UnifyRefType(name,params), UnifyTV(a)) =>
-        getSuperTypes(UnifyRefType(name,params), fc)
-          .map(superType => Set(UnifyEqualsDot(UnifyTV(a), superType).asInstanceOf[UnifyConstraint]))
-      case _ => null
-    }).filter(s => s!=null)
 
-    val aUnifyLessDota = eq1.filter(c => c match{
+  private def getUpperBoundOrSetUpperBoundToObject(forTV: UnifyTV, eq: Set[UnifyConstraint]) = eq.find(_ match {
+    case UnifyLessDot(UnifyTV(a), UnifyRefType(n, params)) => UnifyTV(a).eq(forTV)
+    case _ => false
+  }).getOrElse(UnifyLessDot(forTV, UnifyRefType("Object", List()))).asInstanceOf[UnifyLessDot]
+
+  def step2(eq : Set[UnifyConstraint], fc: FiniteClosure) ={
+    val cpBuilder = new CartesianProductBuilder[Set[UnifyConstraint]]()
+    val aUnifyLessDota = eq.filter(c => c match{
       case UnifyLessDot(UnifyTV(_), UnifyTV(_)) => true
       case _ => false
     }).asInstanceOf[Set[UnifyLessDot]]
 
-    val aUnifyLessDotCConsAndBs: Set[(UnifyLessDot,Option[UnifyTV])] = eq.map(c => c match{
-      case UnifyLessDot(UnifyTV(a),UnifyRefType(name,params)) =>{
-        val bs = aUnifyLessDota.flatMap(c => Set(c.left, c.right)).asInstanceOf[Set[UnifyTV]]
-          .filter(c => !a.equals(c) && isLinked(UnifyTV(a), c, aUnifyLessDota))
-        if(bs.isEmpty){
-          Set((UnifyLessDot(UnifyTV(a),UnifyRefType(name,params)),None))
-        }else{
-          bs.map(b => (UnifyLessDot(UnifyTV(a),UnifyRefType(name,params)),Some(b)))
-        }
-      }
-      case _ => null
-    }).filter(s => s!=null).flatten
-
-    val aUnifyLessDotCCons =  aUnifyLessDotCConsAndBs.map{
-      case (ac:UnifyLessDot,Some(b)) =>
-        Set(Set(UnifyLessDot(b, ac.right))) ++
-          getSuperTypes(ac.right.asInstanceOf[UnifyRefType], fc)
-            .map(superType => Set(UnifyEqualsDot(b, superType)))
-      case (ac, None) => null
-    }.filter(c => c != null).asInstanceOf[Set[Set[Set[UnifyConstraint]]]]
-
-    val eq2 = eq.filter(c => c match{
-      case UnifyLessDot(UnifyTV(_), UnifyRefType(_,_)) => true
-      case UnifyEqualsDot(UnifyTV(_), UnifyRefType(_,_)) => true
-      case UnifyEqualsDot(UnifyRefType(_,_),UnifyTV(_)) => true
-      case UnifyEqualsDot(UnifyRefType(_,_),UnifyRefType(_,_)) => true
-      case UnifyLessDot(UnifyRefType(_,_),UnifyRefType(_,_)) => true
-      case _ => false
+    eq.foreach(cons => cons match {
+      case UnifyLessDot(UnifyRefType(n, ps), UnifyTV(a)) =>
+        val lowerBound = UnifyLessDot(UnifyRefType(n, ps), UnifyTV(a))
+        val upperBound = getUpperBoundOrSetUpperBoundToObject(lowerBound.right.asInstanceOf[UnifyTV], eq)
+        cpBuilder.add(expandLB(lowerBound, upperBound, fc))
+      case UnifyLessDot(UnifyTV(a), UnifyRefType(n, ps)) =>
+        getLinks(UnifyTV(a), aUnifyLessDota)
+          .map(b => {
+            val upperBound = getUpperBoundOrSetUpperBoundToObject(b, eq)
+            val lowerBound = UnifyLessDot(UnifyRefType(n, ps), b)
+            //ExpandLB and add to return constraint set + {b <. C<T>} constraint
+            cpBuilder.add(expandLB(lowerBound, upperBound, fc) + Set(UnifyLessDot(b, b)))
+          })
+        cpBuilder.addSingleton(Set(UnifyLessDot(UnifyTV(a), UnifyRefType(n, ps))))
+        //the upper bound constraint remains in the constraint set:
+        cpBuilder.addSingleton(Set(UnifyLessDot(UnifyTV(a), UnifyRefType(n, ps))))
+      case cons => cpBuilder.addSingleton(Set(cons))
     })
-    val eqSet = new CartesianProduct[Set[UnifyConstraint]](
-      Set(Set(eq1)) ++ Set(Set(eq2)) ++ aUnifyLessDotCCons ++ cUnifyLessDotACons)
-    eqSet
+    cpBuilder.build()
   }
 
   private def getAUnifyLessDotC(from: Set[UnifyConstraint]) = from.filter(c => c match{
@@ -158,12 +117,13 @@ object Unify {
 
   def matchRule(eq : Set[UnifyConstraint], fc: FiniteClosure) = {
     val aUnifyLessDotC = getAUnifyLessDotC(eq)
-    (eq -- aUnifyLessDotC) ++ aUnifyLessDotC.map(c => {
-      val smallerC = aUnifyLessDotC.find(c2 => c2 != c && c2.left.equals(c.left) && fc.isPossibleSupertype(c2.right.asInstanceOf[UnifyRefType].name,c.right.asInstanceOf[UnifyRefType].name))
+    (eq -- aUnifyLessDotC) ++ aUnifyLessDotC.flatMap(c => {
+      val smallerC = aUnifyLessDotC.filter(c2 => c2 != c && c2.left.equals(c.left) && fc.isPossibleSupertype(c2.right.asInstanceOf[UnifyRefType].name,c.right.asInstanceOf[UnifyRefType].name))
       if(smallerC.isEmpty){
-        c
+        List(c)
       }else{
-        UnifyLessDot(smallerC.get.right, c.right)
+        val list = smallerC.toList
+        UnifyLessDot(list.head.right, c.right) :: list.tail
       }
     }
     )
@@ -234,6 +194,14 @@ object Unify {
       case _ => true
     })
 
+  /**
+   * Every 'b' with a <.* b
+   */
+  def getLinks(a: UnifyTV, aUnifyLessDota: Set[UnifyLessDot]): Set[UnifyTV] =
+    aUnifyLessDota.filter(c => c.left.asInstanceOf[UnifyTV].name.equals(a.name))
+      .flatMap(cons => Set(cons.right.asInstanceOf[UnifyTV]) ++ getLinks(cons.right.asInstanceOf[UnifyTV], aUnifyLessDota))
+
+
   private def isLinked(a: UnifyTV, b: UnifyTV, aUnifyLessDota: Set[UnifyLessDot]): Boolean = {
     def getRightSides(of: UnifyTV) ={
       aUnifyLessDota.filter(c => c.left.asInstanceOf[UnifyTV].name.equals(of.name))
@@ -248,33 +216,29 @@ object Unify {
     }
   }
 
-  private def findCircles(aUnifyLessDota: Set[UnifyLessDot]) ={
-    def getRightSides(of: UnifyTV) ={
-      aUnifyLessDota.filter(c => c.left.asInstanceOf[UnifyTV].name.equals(of.name))
-    }
-    def findCircle(graph: List[UnifyLessDot]): List[UnifyLessDot] = {
-      val newAdditions = getRightSides(graph.last.right.asInstanceOf[UnifyTV])
-      var circle: List[UnifyLessDot] = List()
-      val iterator = newAdditions.iterator
-      while(iterator.hasNext && circle.isEmpty){
-        val newAdd = iterator.next()
-        if(newAdd.right.equals(graph.head.left)){
-          circle = graph :+ newAdd
-        }else{
-          circle = findCircle(graph ++ List(newAdd))
-        }
-      }
-      circle
-    }
-    aUnifyLessDota.view.map(c => findCircle(List(c)))
-  }
-
   def equalsRule(eq: Set[UnifyConstraint]) ={
     val aUnifyLessDota = eq.filter(c => c match{
       case UnifyLessDot(UnifyTV(_), UnifyTV(_)) => true
       case _ => false
     }).asInstanceOf[Set[UnifyLessDot]]
-    val circle = findCircles(aUnifyLessDota).find(!_.isEmpty)
+    def getRightSides(of: UnifyTV) ={
+      aUnifyLessDota.filter(c => c.left.asInstanceOf[UnifyTV].name.equals(of.name))
+    }
+    def findCircle(start: UnifyTV) : List[UnifyLessDot] = findCircleRec(start, Set(start))
+    def findCircleRec(next: UnifyTV, visited: Set[UnifyTV]): List[UnifyLessDot] = {
+      val rightSides = getRightSides(next).iterator
+      while(rightSides.hasNext){ //Deep search
+        val rightSide = rightSides.next()
+        val nextTV = rightSide.right.asInstanceOf[UnifyTV]
+        if(visited.contains(nextTV)){
+          return List(rightSide)
+        }else{
+          return rightSide :: findCircleRec(nextTV, visited + nextTV)
+        }
+      }
+      List() // empty list means there are no circles
+    }
+    val circle = aUnifyLessDota.map(cons => findCircle(cons.left.asInstanceOf[UnifyTV])).find(!_.isEmpty)
     if(circle.isDefined){
       val newEq = eq -- circle.get
       Some(newEq ++ (circle.get.map(c => UnifyEqualsDot(c.left, c.right))))
@@ -355,18 +319,16 @@ object Unify {
     var eqFinish: Set[UnifyConstraint] = eq
     do{
       eqNew = doWhileSome(Unify.equalsRule,eqFinish) //We have to apply equals rule first, to get rid of circles
-      eqFinish = eraseRule(swapRule(reduceRule(matchRule(adoptRule(adaptRule(eqNew, fc), fc), fc))))
+      val adaptRuleResult = adaptRule(eqNew, fc)
+      val adoptRuleResult = adoptRule(adaptRuleResult, fc)
+      val matchRuleResult = matchRule(adoptRuleResult, fc)
+      val reduceRuleResult = reduceRule(matchRuleResult)
+      val swapRuleResult = swapRule(reduceRuleResult)
+      val eraseRuleResult = eraseRule(swapRuleResult)
+      eqFinish = eraseRuleResult
     }while(!eqNew.equals(eqFinish))
     eqNew
   }
-
-  def cartesianProduct[T](xss: Set[Set[T]]): Set[Set[T]] =
-    if(xss.isEmpty){
-      Set(Set())
-    } else{
-      for(xh <- xss.head; xt <- cartesianProduct(xss.tail)) yield xt + xh
-    }
-
 
 }
 

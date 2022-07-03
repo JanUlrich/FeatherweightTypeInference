@@ -45,13 +45,16 @@ object Parser {
 
   def constructor[_: P]: P[ParserExpr] = P( kw("new") ~ methodCall).map(m => PConstructor(m.name,m.params))
 
-  def classDefinition[_: P]: P[ParserClass] = P(kw("class") ~ ident ~ genericParamList.? ~ kw("extends") ~ typeParser ~ "{" ~ field.rep(0) ~ method.rep(0) ~ "}")
-    .map(ite => ParserClass(ite._1, ite._2.getOrElse(List()),ite._3,  ite._4.toList, ite._5.toList))
+  def classDefinition[_: P]: P[ParserClass] = P(kw("class") ~ ident ~ genericParamList.? ~ kw("extends") ~ typeParser ~ "{" ~ field.rep(0) ~ constructorDef.? ~ method.rep(0) ~ "}")
+    .map(ite => ParserClass(ite._1, ite._2.getOrElse(List()),ite._3,  ite._4.toList, ite._6.toList))
+  def constructorDef[_:P] = P(ident ~ methodParameters ~ "{" ~ fieldAssign.rep ~ "}")
+  def fieldAssign[_:P]:P[_] = P("this." ~ ident.! ~"=" ~ ident.! ~ ";")
   def field[_: P]: P[(NType, String)] = P(typeParser ~ ident ~ ";")
   def parameterDef[_ : P]: P[(Option[NType], String)] = P((typeParser.? ~ ident) | ident.map((None, _)))
+  def methodParameters[_ : P] : P[List[(Option[NType],String)]] = ("("~")").map(it => List()) | ("(" ~ parameterDef ~ ("," ~ parameterDef).rep(0) ~ ")")
+    .map(ite => (ite._1, ite._2) +: ite._3.toList)
   def method[_: P]: P[ParserMethod] =
-    P(parameterDef ~ (("("~")").map(it => List()) | ("(" ~ parameterDef ~ ("," ~ parameterDef).rep(0) ~ ")")
-      .map(ite => (ite._1, ite._2) +: ite._3.toList))
+    P(parameterDef ~ methodParameters
     ~ "{" ~ kw("return") ~ expr ~ ";" ~ "}")
     .map(ite => ParserMethod(ite._1, ite._2, ite._3, ite._4))
   def genericParamList[_: P]: P[List[(NType,NType)]] =
