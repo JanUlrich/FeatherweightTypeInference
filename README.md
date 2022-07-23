@@ -28,7 +28,7 @@ class Overloading extends Object{
 
 class TestOverloading extends Object{
   test(a){
-    return new Test().m(this,a);
+    return new Overloading().m(this,a);
   }
 }
 ```
