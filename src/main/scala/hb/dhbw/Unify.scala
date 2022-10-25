@@ -1,5 +1,7 @@
 package hb.dhbw
 
+import scala.collection.mutable
+
 sealed abstract class UnifyConstraint(val left: UnifyType, val right: UnifyType)
 final case class UnifyLessDot(override val left: UnifyType, override val right: UnifyType) extends UnifyConstraint(left, right)
 final case class UnifyEqualsDot(override val left: UnifyType, override val right: UnifyType) extends UnifyConstraint(left, right)
@@ -7,6 +9,7 @@ final case class UnifyEqualsDot(override val left: UnifyType, override val right
 sealed abstract class UnifyType
 final case class UnifyRefType(name: String, params: List[UnifyType]) extends UnifyType
 final case class UnifyTV(name: String) extends UnifyType
+final case class UnifyWildcard(name: String, upperBound: UnifyType, lowerBound: UnifyType) extends UnifyType
 
 object Unify {
 
@@ -69,12 +72,36 @@ object Unify {
     results
   }
 
+  var tpvNum: Int = 0
+  def freshName() = {
+    tpvNum = tpvNum+1
+    tpvNum.toString
+  }
   def expandLB(lowerBound: UnifyLessDot, upperBound: UnifyLessDot, fc: FiniteClosure): Set[Set[UnifyConstraint]] ={
+    def convert(fjType: FJType): UnifyType = fjType match {
+      case FJNamedType(n, p) => UnifyRefType(n, p.map(convert))
+      case FJTypeVariable(n) => UnifyTV("$"+n)
+    }
     val b:UnifyTV = lowerBound.right.asInstanceOf[UnifyTV]
     val lowerBoundType : UnifyRefType = lowerBound.left.asInstanceOf[UnifyRefType]
     val upperBoundType : UnifyRefType = upperBound.right.asInstanceOf[UnifyRefType]
-    fc.superTypes(convertRefType(lowerBoundType)).filter(t => fc.aIsSubtypeOfb(t, convertRefType(upperBoundType)))
-      .map(t => Set(UnifyEqualsDot(b, convertNamedType(t))))
+    fc.superTypes(lowerBoundType.name)//.filter(t => fc.aIsSubtypeOfb(t, convertRefType(upperBoundType)))
+      .map(t => {
+        def getUnifyTV(of: FJType): Set[UnifyTV] = of match{
+          case FJTypeVariable(a) => Set(UnifyTV(a))
+          case FJNamedType(_, params) => params.flatMap(getUnifyTV(_)).toSet
+        }
+        val superType = t._2
+        val superTypeTVs = superType.params.flatMap(getUnifyTV(_))
+        val freshWildcards = superTypeTVs.map(tv =>
+          (tv, UnifyWildcard(freshName(), UnifyTV(freshName()), UnifyTV(freshName()))))
+        val wildcardCons : Set[UnifyConstraint] = freshWildcards.map(wc => UnifyLessDot(wc._2.lowerBound, wc._2.upperBound)).toSet
+        val cons : Set[UnifyConstraint] = Set(UnifyEqualsDot(b, convert(superType)), UnifyLessDot(lowerBoundType, convert(superType))) ++
+          wildcardCons
+        var ret = cons
+        freshWildcards.foreach(wc => ret = subst(wc._1, wc._2, ret))
+        ret
+      })
   }
 
   private def getUpperBoundOrSetUpperBoundToObject(forTV: UnifyTV, eq: Set[UnifyConstraint]) = eq.find(_ match {
@@ -129,10 +156,30 @@ object Unify {
     )
   }
 
+  def reduceEqRule(eq: Set[UnifyConstraint]) = eq.flatMap(c => c match {
+    case UnifyEqualsDot(UnifyRefType(an, ap), UnifyRefType(bn, bp)) => ap.zip(bp).map(p => UnifyEqualsDot(p._1, p._2))
+    case x => Set(x)
+  })
+
   def reduceRule(eq: Set[UnifyConstraint]) =  eq.flatMap(c => c match {
-    case UnifyEqualsDot(UnifyRefType(an, ap), UnifyRefType(bn, bp)) => {
+    case UnifyLessDot(UnifyRefType(an, ap), UnifyRefType(bn, bp)) => {
       if(an.equals(bn)){
-        ap.zip(bp).map(p => UnifyEqualsDot(p._1, p._2))
+        val wildcardMap = ap.zip(bp).collect(p => p._2 match {
+          case UnifyWildcard(n, u, l) => (UnifyWildcard(n, u, l) -> p._1)
+        })
+        val doteqs: Set[UnifyConstraint] = ap.zip(bp).flatMap(p => p._2 match {
+          case UnifyWildcard(_,_,_) => None
+          case x => Some(UnifyEqualsDot(p._1, x))
+        }).toSet
+        val wildcardCons: Set[UnifyConstraint] = ap.zip(bp).collect(p => p._2 match {
+          case UnifyWildcard(n, u, l) =>
+            Set(UnifyEqualsDot(p._1, p._2), UnifyLessDot(p._1, u), UnifyLessDot(l, p._1))
+        }).flatten.toSet
+        var ret = wildcardCons ++ doteqs
+        wildcardMap.foreach(p => {
+          ret = substWC(p._1, p._2, ret)
+        })
+        ret
       }else{
         Set(UnifyEqualsDot(UnifyRefType(an, ap), UnifyRefType(bn, bp)))
       }
@@ -140,31 +187,40 @@ object Unify {
     case x => Set(x)
   })
 
+  def wildcardRules(eq: Set[UnifyConstraint]): Set[UnifyConstraint] = eq.flatMap(c => c match {
+    case UnifyLessDot(UnifyWildcard(n, u, l), t) => Set(UnifyLessDot(u, t))
+    case UnifyLessDot(t, UnifyWildcard(n, u, l)) => Set(UnifyLessDot(t, l))
+    case UnifyEqualsDot(UnifyWildcard(n, u, l), t) => Set(UnifyEqualsDot(u, t), UnifyEqualsDot(l,t))
+    case UnifyEqualsDot(UnifyWildcard(n, u, l), UnifyWildcard(n2, u2, l2)) => if (n.eq(n2)) {
+      Set()
+    } else {
+      Set(UnifyEqualsDot(l, u), UnifyEqualsDot(u2, l2), UnifyEqualsDot(l, l2))
+    }
+    case x => Set(x)
+  })
+
   def swapRule(eq : Set[UnifyConstraint]) = eq.map(c => c match {
     case UnifyEqualsDot(UnifyRefType(an, ap), UnifyTV(a)) => UnifyEqualsDot(UnifyTV(a), UnifyRefType(an, ap))
+    case UnifyEqualsDot(UnifyWildcard(n,u,l), UnifyTV(a)) => UnifyEqualsDot(UnifyTV(a), UnifyWildcard(n,u,l))
     case x => x
   })
 
-  private def convert(fjType: FJType): UnifyType = fjType match {
-    case FJNamedType(n, p) => UnifyRefType(n, p.map(convert))
-    case FJTypeVariable(n) => UnifyTV(n)
-  }
-  private def convertNamedType(fjType: FJNamedType): UnifyRefType = UnifyRefType(fjType.name, fjType.params.map(convert))
-  private def convertRefType(unifyType: UnifyRefType): FJNamedType = FJNamedType(unifyType.name, unifyType.params.map(convert(_)))
-  private def convert(unifyType: UnifyType): FJType = unifyType match {
-    case UnifyRefType(n, p) => FJNamedType(n, p.map(convert(_)))
-    case UnifyTV(n) => FJTypeVariable(n)
-  }
-  private def getSuperTypes(of: UnifyRefType, fc: FiniteClosure) = fc.superTypes(convertRefType(of)).map(convertNamedType)
+  private def getSuperTypes(of: UnifyRefType, fc: FiniteClosure) = fc.superTypes(of.name)
+
   def adaptRule(eq: Set[UnifyConstraint], fc: FiniteClosure) = {
+    def paramSubst(param : FJType, paramMap : Map[FJType, UnifyType]): UnifyType = param match{
+      case FJNamedType(n, params) => UnifyRefType(n, params.map(paramSubst(_, paramMap)))
+      case typeVariable => paramMap.get(typeVariable).get
+    }
     eq.map(c => c match {
-      case UnifyLessDot(UnifyRefType(an, ap), UnifyRefType(bn, bp)) => {
-        if(fc.isPossibleSupertype(an, bn)){
-          UnifyEqualsDot(getSuperTypes(UnifyRefType(an, ap), fc).find(r => r.name.equals(bn)).get, UnifyRefType(bn, bp))
-        }else{
-          UnifyLessDot(UnifyRefType(an, ap), UnifyRefType(bn, bp))
+      case UnifyLessDot(UnifyRefType(an, ap), UnifyRefType(bn, bp)) =>
+        getSuperTypes(UnifyRefType(an, ap), fc).find(r => r._2.name.equals(bn)) match {
+          case Some(subtypeRelation) =>
+            val paramMap = subtypeRelation._1.params.zip(ap).toMap
+            val newParams = subtypeRelation._2.params.map(paramSubst(_, paramMap))
+            UnifyLessDot(UnifyRefType(subtypeRelation._2.name, newParams), UnifyRefType(bn, bp))
+          case None => UnifyLessDot(UnifyRefType(an, ap), UnifyRefType(bn, bp))
         }
-      }
       case x => x
     })
   }
@@ -247,11 +303,12 @@ object Unify {
     }
   }
 
-  private def paramsContain(tv: UnifyTV, inParams: UnifyRefType): Boolean =
-    inParams.params.find(t => t match {
+  private def paramsContain(tv: UnifyTV, inType: UnifyType): Boolean =
+    inType match {
       case UnifyTV(a) => tv.equals(UnifyTV(a))
-      case UnifyRefType(a,p) => paramsContain(tv, UnifyRefType(a,p))
-    }).isDefined
+      case UnifyRefType(a,p) => p.find(t => paramsContain(tv, t)).isDefined
+      case UnifyWildcard(n, u, l) => paramsContain(tv, u) || paramsContain(tv, l)
+    }
   def substStep(eq: Set[UnifyConstraint]): Step4Result = {
     def substCall(eq: Set[UnifyConstraint]) = eq.find(c => c match {
       case UnifyEqualsDot(UnifyTV(a), UnifyRefType(n, p)) => !paramsContain(UnifyTV(a), UnifyRefType(n,p))
@@ -275,10 +332,24 @@ object Unify {
       ChangedSet(substResult._1 ++ substVars)
   }
 
+  private def substHelperWC(a: UnifyWildcard, withType: UnifyType,in: UnifyType) :UnifyType = in match {
+    case UnifyRefType(n, p) => UnifyRefType(n,p.map(t => substHelperWC(a, withType, t)))
+    case UnifyWildcard(n, u, l) =>
+      if(a.name.equals(n)){withType}else{in}
+  }
+
+  def substWC(a: UnifyWildcard, substType: UnifyType,eq: Set[UnifyConstraint]): Set[UnifyConstraint] = {
+    eq.map(c => c match {
+      case UnifyLessDot(left, right) => UnifyLessDot(substHelperWC(a, substType, left), substHelperWC(a, substType, right))
+      case UnifyEqualsDot(left, right) => UnifyEqualsDot(substHelperWC(a, substType, left), substHelperWC(a, substType, right))
+    })
+  }
   private def substHelper(a: UnifyTV, withType: UnifyType,in: UnifyType) :UnifyType = in match {
     case UnifyRefType(n, p) => UnifyRefType(n,p.map(t => substHelper(a, withType, t)))
     case UnifyTV(n) =>
       if(a.name.equals(n)){withType}else{in}
+    case UnifyWildcard(name, upperBound, lowerBound) =>
+      UnifyWildcard(name, substHelper(a, withType, upperBound), substHelper(a, withType, lowerBound))
   }
 
   def subst(a: UnifyTV, substType: UnifyType,eq: Set[UnifyConstraint]): Set[UnifyConstraint] = {
@@ -323,7 +394,9 @@ object Unify {
       val adoptRuleResult = adoptRule(adaptRuleResult, fc)
       val matchRuleResult = matchRule(adoptRuleResult, fc)
       val reduceRuleResult = reduceRule(matchRuleResult)
-      val swapRuleResult = swapRule(reduceRuleResult)
+      val reduceEqRuleResult = reduceEqRule(reduceRuleResult)
+      val wildcardRulesResult = wildcardRules(reduceEqRuleResult)
+      val swapRuleResult = swapRule(wildcardRulesResult)
       val eraseRuleResult = eraseRule(swapRuleResult)
       eqFinish = eraseRuleResult
     }while(!eqNew.equals(eqFinish))

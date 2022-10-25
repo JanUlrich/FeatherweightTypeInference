@@ -49,7 +49,8 @@ object FJTypeinference {
       case GenericType(name) => FJNamedType(name, List())
       case RefType(n, p) => FJNamedType(n,p.map(convertToFJType))
     }
-    def methodIsSupertype(m : Method, superMethod: Method) = {
+    def methodIsSupertype(m : Method, superMethod: Method) = false //TODO
+    /*{
       if(m.genericParams.equals(superMethod.genericParams)) {
         val returnIsSub = finiteClosure.aIsSubtypeOfb(convertToFJType(m.retType), convertToFJType(superMethod.retType))
         val paramsAreSup = m.params.zip(superMethod.params).foldLeft(true)((isSub, m2) => {
@@ -60,7 +61,7 @@ object FJTypeinference {
         false
       }
     }
-
+    */
     val methodNames = in.methods.map(_.name).toSet
     val newMethods = methodNames.flatMap(mName => {
       val overloadedMethods = in.methods.filter(_.name.equals(mName))

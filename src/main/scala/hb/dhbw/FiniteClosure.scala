@@ -7,14 +7,19 @@ case class FJTypeVariable(name: String) extends FJType
 
 class FiniteClosure(val extendsRelations : Set[(FJNamedType, FJNamedType)]){
 
-  private def calculateSupertypes(of: FJNamedType) ={
-    var rel = Set((of, of))
+  private def calculateSupertypes(nameOfType: String) ={
+    var rel: Set[(FJNamedType, FJNamedType)] = extendsRelations.flatMap(r =>
+      if(r._1.name.equals(nameOfType)) {
+        Some(r)
+      } else {
+        None
+      })
     var size = rel.size
     do {
       size = rel.size
       rel = rel ++ reflexiveTypes(rel) ++ transitiveTypes(rel) ++ superClassTypes(rel)
     }while(rel.size > size)
-    rel.map(_._2)
+    rel
   }
   private def reflexiveTypes(of: Set[(FJNamedType, FJNamedType)]) ={
     val ref = Set.newBuilder[(FJNamedType, FJNamedType)]
@@ -24,29 +29,19 @@ class FiniteClosure(val extendsRelations : Set[(FJNamedType, FJNamedType)]){
   }
   private def transitiveTypes(of: Set[(FJNamedType, FJNamedType)]) ={
     val ref = Set.newBuilder[(FJNamedType, FJNamedType)]
-    ref ++= of.flatMap(pair => of.filter(p =>  p._1.eq(pair._2)))
+    ref ++= of.flatMap(pair => of.filter(p =>  p._1.equals(pair._2)))
     ref.result()
   }
-  private def superClassTypes(of: FJNamedType) = {
-    def paramSubst(param : FJType, paramMap : Map[FJType, FJType]): FJType = param match{
-      case FJNamedType(n, params) => FJNamedType(n, params.map(paramSubst(_, paramMap)))
-      case typeVariable => paramMap.get(typeVariable).get
-    }
-    val extendsRelation = extendsRelations.filter(pair => pair._1.name.equals(of.name))
-    extendsRelation.map(p => {
-      val paramMap = p._1.params.zip(of.params).toMap
-      (of,FJNamedType(p._2.name, p._2.params.map(paramSubst(_, paramMap))))
-    })
-  }
+  private def superClassTypes(of: FJNamedType) =
+    extendsRelations.filter(pair => pair._1.name.equals(of.name))
+
   private def superClassTypes(of: Set[(FJNamedType, FJNamedType)]) : Set[(FJNamedType, FJNamedType)] ={
     val sClass = Set.newBuilder[(FJNamedType, FJNamedType)]
     sClass ++= of.flatMap(pair => Set(pair._2, pair._1)).flatMap(t => superClassTypes(t))
     sClass.result()
   }
 
-  def superTypes(of : FJNamedType) : Set[FJNamedType] = calculateSupertypes(of)
-
-  def aIsSubtypeOfb(a: FJNamedType, b: FJNamedType): Boolean = calculateSupertypes(a).contains(b)
+  def superTypes(of : String) : Set[(FJNamedType, FJNamedType)] = calculateSupertypes(of)
 
   def isPossibleSupertype(of: String, superType: String): Boolean = {
     val extendsMap = extendsRelations.map(p => (p._1.name,p._2.name)).toMap
